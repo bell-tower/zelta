@@ -82,32 +82,32 @@
 
 # EXAMPLES
 
-**Basic Comparison:** Compare snapshots between local source and target datasets.
+Basic comparison between local source and target datasets:
 
-```sh
-zelta match tank/source/dataset tank/target/dataset
-```
+    zelta match tank/source/dataset tank/target/dataset
 
-**Remote Comparison:** Compare snapshots and show the size in bytes of missing snapshots on the second system.
+Remote comparison showing the size in bytes of missing snapshots on the second system:
 
-```sh
-zelta match user@remote.host1:tank/source/dataset user2@remote.host2:tank/target/dataset
-```
+    zelta match user@remote.host1:tank/source/dataset user2@remote.host2:tank/target/dataset
 
-**Quick backup integrity check:**  Compare the top two levels of similar backup repositories to see which backups might be missing or out of between each host.
+Quick backup integrity check—compare the top two levels of similar backup repositories to see which backups might be missing or out of sync between each host:
 
-```sh
-zelta match -d2 backuphost:rust101/Backups rust000/Backups
-```
+    zelta match -d2 backuphost:rust101/Backups rust000/Backups
 
-**Dry Run:** Display the `zfs list` commands that would be used without executing them.
+Dry run to display the `zfs list` commands that would be used without executing them:
 
-```sh
-zelta match -n tank/source/dataset tank/target/dataset
-```
+    zelta match -n tank/source/dataset tank/target/dataset
+
+# EXIT STATUS
+
+Returns 0 on success, non-zero on error.
+
+# NOTES
+
+See **zelta-options(7)** for environment variables and `zelta.env` configuration.
 
 # SEE ALSO
-zelta(8), zelta-backup(8), zelta-policy(8), zelta-clone(8), zelta-options(7), zelta-revert(8), zelta-rotate(8), cron(8), ssh(1), zfs(8)
+zelta(8), zelta-backup(8), zelta-policy(8), zelta-clone(8), zelta-options(7), zelta-revert(8), zelta-rotate(8), zelta-snapshot(8), cron(8), ssh(1), zfs(8)
 
 # AUTHORS
 Daniel J. Bell <_bellhyve@zelta.space_>

@@ -117,7 +117,7 @@ errors.
 .TP
 \f[B]\-j, \-\-json\f[R]
 Output results in JSON format.
-See \f[B]zelta\-options(8)\f[R] for details.
+See \f[B]zelta\-options(7)\f[R] for details.
 .TP
 \f[B]\-n, \-\-dryrun, \-\-dry\-run\f[R]
 Display \f[CR]zfs\f[R] commands without executing them.
@@ -311,7 +311,7 @@ flags are passed through directly:
 \f[B]zfs send:\f[R]
 \f[CR]\-b, \-\-backup, \-\-embed, \-\-holds, \-L, \-\-largeblock, \-\-proctitle, \-\-props, \-\-raw, \-\-skipmissing, \-V, \-w\f[R]
 .PP
-\f[B]zfs recv:\f[R] \f[CR]\-F, \-M, \-u\f[R]
+\f[B]zfs recv:\f[R] \f[CR]\-F, \-M, \-u, \-o, \-x\f[R]
 .PP
 \f[B]Ambiguous or unsupported flags:\f[R] \- Single\-dash options with
 multiple meanings are \f[B]not supported\f[R]:
@@ -323,7 +323,7 @@ handlers (see above): \f[CR]\-I, \-i, \-R, \-X, \-n\f[R]
 .EX
 # Recompress at target with zstd\-5
 # WARNING: This disables encrypted sends!
-zelta backup \-L \-\-recv\-override \(dq\-o compression=zstd\-5\(dq source target
+zelta backup \-L \-o compression=zstd\-5 source target
 .EE
 .PP
 \f[B]When in doubt, use the granular override options instead.\f[R]
@@ -369,7 +369,7 @@ zelta backup \-d 2 sink/source tank/target
 .SH EXIT STATUS
 Returns 0 on success, non\-zero on error.
 .SH NOTES
-See \f[B]zelta\-options(8)\f[R] for environment variables,
+See \f[B]zelta\-options(7)\f[R] for environment variables,
 \f[CR]zelta.env\f[R] configuration, and \f[CR]zelta policy\f[R]
 integration.
 .PP

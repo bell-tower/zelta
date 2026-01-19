@@ -67,30 +67,29 @@ See \f[CR]zelta.env.example\f[R] to adjust the default naming scheme.
 \f[B]\-d \f[BI]depth\f[B], \-\-depth \f[BI]depth\f[B]\f[R]
 Limits the depth of all Zelta operations.
 .SH EXAMPLES
-\f[B]Clone a dataset tree:\f[R]
+Clone a dataset tree:
 .IP
 .EX
-zelta clone tank/vm/myos tank/temp/myos\-202404 
+zelta clone tank/vm/myos tank/temp/myos\-202404
 .EE
 .PP
-\f[B]Recover a dataset tree, in place, to a previous snapshot\(cqs
-state:\f[R]
+Recover a dataset tree, in place, to a previous snapshot\(cqs state:
 .IP
 .EX
 zfs rename tank/vm/myos tank/Archives/myos\-202404
 zelta clone tank/Archives/myos\-202404\(atgoodsnapshot tank/vm/myos
 .EE
 .PP
-\f[B]Dry Run:\f[R] Display the \f[CR]zfs clone\f[R] commands without
-executing them.
+Dry Run: Display the \f[CR]zfs clone\f[R] commands without executing
+them.
 .IP
 .EX
 zelta clone \-n tank/source/dataset tank/target/dataset
 .EE
 .SH SEE ALSO
-zelta(8), zelta\-backup(8), zelta\-match(8), zelta\-options(8),
-zelta\-policy(8), zelta\-revert(8), zelta\-rotate(8), zelta\-sync(8),
-cron(8), ssh(1), zfs(8), zfs\-clone(8), zfs\-promote(8)
+zelta(8), zelta\-backup(8), zelta\-match(8), zelta\-options(7),
+zelta\-policy(8), zelta\-revert(8), zelta\-rotate(8), cron(8), ssh(1),
+zfs(8), zfs\-clone(8), zfs\-promote(8)
 .SH AUTHORS
 Daniel J. Bell <\f[I]bellhyve\(atzelta.space\f[R]>
 .SH WWW

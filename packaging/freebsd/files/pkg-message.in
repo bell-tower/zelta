@@ -1,0 +1,21 @@
+[
+{ type: install
+  message: <<EOM
+To start using Zelta, run:
+
+    zelta help
+
+To configure defaults like snapshot names, see:
+
+    %%ETCDIR%%/zelta.env
+
+For detailed information on configuring Zelta, please refer to
+'zelta help [<topic>]' or the wiki:
+
+    https://zelta.space/home
+
+If you find any bugs please file them
+at https://github.com/bellhyve/zelta/issues.
+EOM
+}
+]

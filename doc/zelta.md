@@ -38,6 +38,9 @@ For detailed usage of each subcommand, run **zelta help <subcommand>** or see th
 **zelta backup** _source_ _target_
 :    Replicate a dataset tree. Creates snapshots if needed, detects optimal send options, and replicates intermediate snapshots. See **zelta-backup(8)**.
 
+**zelta snapshot** _endpoint_
+:    Create recursive snapshots on a local or remote endpoint. See **zelta-snapshot(8)**.
+
 ## Recovery
 
 **zelta clone** _dataset_ _target_
@@ -98,8 +101,12 @@ Back up everything defined in policy settings (**zelta.conf**).
 # EXIT STATUS
 Returns 0 on success, non-zero on error.
 
+# NOTES
+
+See **zelta-options(7)** for environment variables and `zelta.env` configuration.
+
 # SEE ALSO
-zelta-match(8), zelta-backup(8), zelta-policy(8), zelta-clone(8), zelta-options(7), zelta-revert(8), zelta-rotate(8), cron(8), ssh(1), zfs(8)
+zelta-match(8), zelta-backup(8), zelta-policy(8), zelta-clone(8), zelta-options(7), zelta-revert(8), zelta-rotate(8), zelta-snapshot(8), cron(8), ssh(1), zfs(8)
 
 # AUTHORS
 Daniel J. Bell <_bellhyve@zelta.space_>

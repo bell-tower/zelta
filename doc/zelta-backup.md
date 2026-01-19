@@ -138,9 +138,8 @@ Zelta automatically applies non-destructive and efficient `zfs send` and `zfs re
 **Most Common Use Case: Recompress Backups**
 
 Typically, users adjust Zelta options because they would like to aggressively compress data on their backup endpoints. This is best done with the `--send-default` and `--recv-default` flags, which will not prevent Zelta from sending encrypted backups in raw (encrypted) format:
-```
-zelta backup --send-default -Le --recv-default '-o compression=zstd-5' source backup
-```
+
+    zelta backup --send-default -Le --recv-default '-o compression=zstd-5' source backup
 
 All overrides can also be configured globally in `zelta.env` or per-job via `zelta.conf`.
 
@@ -188,16 +187,15 @@ For precise control in a dataset tree with mixed types, override specific contex
 : Additional `zfs recv` options for volume datasets (default: `-o volmode=none`)
 
 **Examples:**
-```
-# Allow target to recompress unencrypted data
-zelta backup --send-default "-Le" source target
 
-# Change volume mode on target
-zelta backup --recv-vol "-o volmode=dev" source target
+    # Allow target to recompress unencrypted data
+    zelta backup --send-default "-Le" source target
 
-# Avoid mountpoint permission issues on some systems
-zelta backup --recv-fs "-o mountpoint=none" source target
-```
+    # Change volume mode on target
+    zelta backup --recv-vol "-o volmode=dev" source target
+
+    # Avoid mountpoint permission issues on some systems
+    zelta backup --recv-fs "-o mountpoint=none" source target
 
 ### Dataset Tree Override Options
 
@@ -210,10 +208,9 @@ These options **replace all context-specific defaults** for an entire backup job
 : Override all default `zfs recv` options
 
 **Example:**
-```
-# Use minimal `zfs send` to send uncompressed (**and decrypted!**) streams and recompress aggressively on the target
-zelta backup --send-override "-L" --recv-override "-o compression=zstd-5" source target
-```
+
+    # Use minimal `zfs send` to send uncompressed (**and decrypted!**) streams and recompress aggressively on the target
+    zelta backup --send-override "-L" --recv-override "-o compression=zstd-5" source target
 
 ### Pass-Through Override Flags
 
@@ -230,11 +227,10 @@ The following unambiguous `zfs send` and `zfs recv` flags are passed through dir
 - Options with Zelta-specific handlers (see above): `-I, -i, -R, -X, -n`
 
 **Example:**
-```
-# Recompress at target with zstd-5
-# WARNING: This disables encrypted sends!
-zelta backup -L -o compression=zstd-5 source target
-```
+
+    # Recompress at target with zstd-5
+    # WARNING: This disables encrypted sends!
+    zelta backup -L -o compression=zstd-5 source target
 
 **When in doubt, use the granular override options instead.**
 
@@ -279,7 +275,7 @@ The `zelta sync` command is a convenience alias for `zelta backup -i` and may be
 
 # SEE ALSO
 
-zelta(8), zelta-options(7), zelta-match(8), zelta-policy(8), zelta-clone(8), zelta-revert(8), zelta-rotate(8), ssh(1), zfs(8), zfs-send(8), zfs-receive(8)
+zelta(8), zelta-options(7), zelta-match(8), zelta-policy(8), zelta-clone(8), zelta-revert(8), zelta-rotate(8), zelta-snapshot(8), ssh(1), zfs(8), zfs-send(8), zfs-receive(8)
 
 # AUTHORS
 

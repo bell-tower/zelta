@@ -18,6 +18,8 @@ As with other Zelta commands, **zelta prune** works recursively on dataset trees
 
 ## Safety Criteria
 
+**WARNING:** `zelta prune` is a new feature currently in production testing and will be formally released in Zelta 1.2 (May 2026).
+
 A snapshot is considered safe to prune only if:
 
 1. The snapshot exists on the target (has been replicated)
@@ -91,13 +93,19 @@ Output individual snapshots instead of ranges:
 
     zelta prune --no-ranges tank/data backup-host.example:tank/backups/data
 
-Review and then delete prunable snapshots:
+Review prunable snapshots, then delete after confirmation:
 
     # First, review what would be deleted
     zelta prune tank/data backup:tank/backups/data
 
-    # If satisfied, pipe to xargs for deletion (use with caution)
-    zelta prune tank/data backup:tank/backups/data | xargs -n1 zfs destroy
+    # Save to a file for review
+    zelta prune tank/data backup:tank/backups/data | tee /tmp/prune-list.txt
+
+    # Review the list carefully
+    # Use `zelta prune -v` to see matching snapshots being kept
+
+    # If satisfied, delete the replicated source snapshots
+    cat /tmp/prune-list.txt | xargs -n1 zfs destroy
 
 Exclude temporary datasets from consideration:
 
@@ -109,7 +117,7 @@ Returns 0 on success, non-zero on error.
 
 # NOTES
 
-**zelta prune** is experimental. Always review output before executing deletions.
+**zelta prune** is experimental. Always review output before executing deletions. Deleting snapshots is irreversible.
 
 This command is driven by the **zelta match** comparison engine. See **zelta-match(8)** for details on how source and target snapshots are compared.
 

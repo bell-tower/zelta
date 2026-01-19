@@ -36,7 +36,7 @@ Without additional parameters, **zelta policy** will run a **zelta backup** job 
 
 **_dataset_**  Run a backup job only for the _dataset_ listed. Note this parameter can match the _source_ **or** _target_ dataset, e.g., requesting `zroot` would run the replication for any matching dataset on any host.
 
-**_host:dataset_**  Specify a _source_ or _backup_ dataset endpoint name, equivalent to the paramemters of **zelta backup**.
+**_host:dataset_**  Specify a _source_ or _backup_ dataset endpoint name, equivalent to the parameters of **zelta backup**.
 
 **_dataset_pattern_**  Specify the final source or target dataset label. For example, `vm` would run all backup jobs with datasets ending in `/vm`.
 
@@ -44,13 +44,21 @@ Without additional parameters, **zelta policy** will run a **zelta backup** job 
 For detailed documentation of the **zelta policy** configuration see `zelta.conf.example`.
 
 **/usr/local/etc/zelta/zelta.conf**
-:    The default configuration file locaiton.
+:    The default configuration file location.
 
 # ENVIRONMENT
 For detailed documentation of the **zelta** environment variables see `zelta help options`.
 
+# EXIT STATUS
+
+Returns 0 on success, non-zero on error.
+
+# NOTES
+
+See **zelta-options(7)** for environment variables and `zelta.env` configuration.
+
 # SEE ALSO
-zelta(8), zelta-clone(8), zelta-backup(8), zelta-options(7), zelta-match(8), zelta-revert(8), zelta-rotate(8), ssh(1), zfs(8), zfs-list(8)
+zelta(8), zelta-clone(8), zelta-backup(8), zelta-options(7), zelta-match(8), zelta-revert(8), zelta-rotate(8), zelta-snapshot(8), ssh(1), zfs(8), zfs-list(8)
 
 # AUTHORS
 Daniel J. Bell <_bellhyve@zelta.space_>

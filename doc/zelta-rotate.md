@@ -4,6 +4,10 @@
 
 **zelta rotate** - recover sync continuity by renaming, cloning, and incrementally syncing a ZFS replica
 
+# SYNOPSIS
+
+**zelta rotate** [_OPTIONS_] _source_ _target_
+
 # DESCRIPTION
 **zelta rotate** renames a target replica and performs a multi-way clone and sync operation to restore sync continuity when a source and target have diverged. The operation considers up to four dataset states: the current source, the current target, the source's origin (if cloned), and the target's origin, finding the optimal sync path between them.
 

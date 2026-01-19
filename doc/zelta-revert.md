@@ -4,6 +4,10 @@
 
 **zelta revert** - rewind a ZFS dataset tree in place by renaming and cloning
 
+# SYNOPSIS
+
+**zelta revert** [_OPTIONS_] _endpoint_[@_snapshot_]
+
 # DESCRIPTION
 **zelta revert** rewinds a dataset to a previous snapshot state by renaming the current dataset and creating a clone from the specified snapshot. This technique is a non-destructive alternative to `zfs rollback`, preserving the current state for forensic analysis, testing, or recovery scenarios.
 

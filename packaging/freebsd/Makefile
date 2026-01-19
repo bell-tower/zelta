@@ -1,17 +1,17 @@
 PORTNAME=	zelta
 DISTVERSIONPREFIX=	v
-DISTVERSION=	0.5
-DISTVERSIONSUFFIX=	-beta
+DISTVERSION=	1.1.0
+PORTREVISION=	1
 CATEGORIES=	sysutils
 
-MAINTAINER=	jt@obs-sec.com
-COMMENT=	Zelta Replication Suite
+MAINTAINER=	daniel@belltech.it
+COMMENT=	ZFS tools used for data migration and backup management
 WWW=		https://github.com/bellhyve/zelta
 
 LICENSE=	BSD2CLAUSE
 
 USE_GITHUB=	yes
-GH_ACCOUNT=	q5sys
+GH_ACCOUNT=	bellhyve
 
 NO_ARCH=	yes
 NO_BUILD=	yes
@@ -32,6 +32,8 @@ do-install:
 	${INSTALL_DATA} ${WRKSRC}/${_ZELTA_ENV} ${STAGEDIR}${ETCDIR}/${_ZELTA_ENV}.sample
 	${INSTALL_DATA} ${WRKSRC}/${_ZELTA_CONF} ${STAGEDIR}${ETCDIR}/${_ZELTA_CONF}.sample
 	${MKDIR} ${STAGEDIR}${_ZELTA_SHARE}
-	${INSTALL_DATA} ${WRKSRC}/share/zelta/* ${STAGEDIR}${_ZELTA_SHARE}
+	${INSTALL_SCRIPT} ${WRKSRC}/share/zelta/* ${STAGEDIR}${_ZELTA_SHARE}
+	${INSTALL_MAN} ${WRKSRC}/doc/*.8 ${STAGEDIR}${PREFIX}/share/man/man8
+	${INSTALL_MAN} ${WRKSRC}/doc/*.7 ${STAGEDIR}${PREFIX}/share/man/man7
 
 .include <bsd.port.mk>

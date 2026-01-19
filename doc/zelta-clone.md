@@ -2,81 +2,89 @@
 
 # NAME
 
-**zelta clone** - Perform a recursive clone operation.
-
+**zelta clone** - perform a recursive clone operation
 
 # SYNOPSIS
 
-**zelta clone** [**-d** _depth_] _source/dataset[@snap]_ _target/dataset_
-
+**zelta clone** [_OPTIONS_] _source_[@_snapshot_] _target_
 
 # DESCRIPTION
-`zelta clone` performs a recursive **zfs clone** operation on a dataset. This is useful for recursive duplication of dataset trees and backup inspection and recovery of a files replicated with `zelta backup`. The clones will reference the latest or indicated snapshot, and consume practically no additional space. Clones can be modified and destroyed without affecting their origin datasets.
 
-The _source_ and _target_ must be on the same host and pool. The mountpoint will be inherited below the target parent (as provided by `zfs clone`). The _target_ dataset must not exist. To create a clone on a remote host ensure the _source_ and _target_ are identical including the username and hostname used:
+**zelta clone** performs a recursive **zfs clone** operation on a dataset. This is useful for recursive duplication of dataset trees and backup inspection and recovery of files replicated with **zelta backup**. The clones will reference the latest or indicated snapshot, and consume practically no additional space. Clones can be modified and destroyed without affecting their origin datasets.
+
+The _source_ and _target_ must be on the same host and pool. The mountpoint will be inherited below the target parent (as provided by **zfs clone**). The _target_ dataset must not exist. To create a clone on a remote host, ensure the _source_ and _target_ are identical including the username and hostname used.
+
+Remote endpoint names follow **scp(1)** conventions. Dataset names follow **zfs(8)** naming conventions.
 
 Example remote operation:
 
-    zelta clone backup@host1.com:tank/zones/data host1.com:tank/clones/data
+    zelta clone backup@host1.com:tank/zones/data backup@host1.com:tank/clones/data
 
 # OPTIONS
 
-**Required Options**
+**Endpoint Arguments (Required)**
 
 _source_
-:    A dataset, in the form **pool[/dataset][@snapshot]**, which will be cloned along with all of its descendents. If a snapshot is not given, the most recent snapshot will be used.
+: A dataset, in the form **pool[/dataset][@snapshot]**, which will be cloned along with all of its descendants. If a snapshot is not given, the most recent snapshot will be used.
 
 _target_
-:    A dataset on the same pool as the **source/dataset**, where the clones will be created. This dataset must not exist.
+: A dataset on the same pool as the _source_, where the clones will be created. This dataset must not exist.
 
-**Logging Options**
+**Output Options**
 
-**-n, \--dryrun**
-:    Don't clone, but show the `zfs clone` commands that would be executed.
+**-v, \--verbose**
+: Increase verbosity. Specify once for operational detail, twice (`-vv`) for debug output.
 
-**-q**
-:    Reduce verbosity.
+**-q, \--quiet**
+: Quiet output. Specify once to suppress warnings, twice (`-qq`) to suppress errors.
 
-**-v**
-:    Increase verbosity.
+**-n, \--dryrun, \--dry-run**
+: Display `zfs` commands without executing them.
 
-**Dataset and Snapshot Options**
+**Snapshot Options**
 
-**\--snapshot-always**
-:    Ensure a snapshot before cloning.
+**\--snapshot, \--snapshot-always**
+: Ensure a snapshot before cloning.
 
-**\--snapshot-name**
-:    Specify a snapshot name. See `zelta.env.example` to adjust the default naming scheme.
+**\--snap-name** _NAME_
+: Specify snapshot name. Use `$(command)` for dynamic generation. Default: `$(date -u +zelta_%Y-%m-%d_%H.%M.%S)`.
 
-**-d _depth_, \--depth _depth_**
-:    Limits the depth of all Zelta operations.
+**Dataset Options**
+
+**-d, \--depth** _LEVELS_
+: Limit recursion depth. For example, a depth of 1 includes only the specified dataset.
 
 # EXAMPLES
 
-**Clone a dataset tree:**
+Clone a dataset tree:
 
-```sh
-zelta clone tank/vm/myos tank/temp/myos-202404
-```
+    zelta clone tank/vm/myos tank/temp/myos-202404
 
-**Recover a dataset tree, in place, to a previous snapshot's state:**
+Recover a dataset tree, in place, to a previous snapshot's state:
 
-```sh
-zfs rename tank/vm/myos tank/Archives/myos-202404
-zelta clone tank/Archives/myos-202404@goodsnapshot tank/vm/myos
-```
+    zfs rename tank/vm/myos tank/Archives/myos-202404
+    zelta clone tank/Archives/myos-202404@goodsnapshot tank/vm/myos
 
-**Dry Run:** Display the `zfs clone` commands without executing them.
+Dry run to display the `zfs clone` commands without executing them:
 
-```sh
-zelta clone -n tank/source/dataset tank/target/dataset
-```
+    zelta clone -n tank/source/dataset tank/target/dataset
+
+# EXIT STATUS
+
+Returns 0 on success, non-zero on error.
+
+# NOTES
+
+See **zelta-options(7)** for environment variables and `zelta.env` configuration.
 
 # SEE ALSO
-zelta(8), zelta-backup(8), zelta-match(8), zelta-options(7), zelta-policy(8), zelta-revert(8), zelta-rotate(8), cron(8), ssh(1), zfs(8), zfs-clone(8), zfs-promote(8)
+
+zelta(8), zelta-options(7), zelta-backup(8), zelta-match(8), zelta-policy(8), zelta-revert(8), zelta-rotate(8), ssh(1), zfs(8), zfs-clone(8), zfs-promote(8)
 
 # AUTHORS
+
 Daniel J. Bell <_bellhyve@zelta.space_>
 
 # WWW
+
 https://zelta.space
