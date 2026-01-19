@@ -8,7 +8,7 @@
 # VARS: List of options provided from a referenced associative array.
 #
 CHECK	DEFAULT	zfs list	-Ho name	ds
-LIST	DEFAULT	zfs list	 -Hpr -t all -Screatetxg -o	props flags ds
+LIST	DEFAULT	zfs list	-Hpr -t all -Screatetxg -o	props flags ds
 PROPS	DEFAULT	zfs get	-Hpr -s local,none -t filesystem,volume -o name,property,value all	flags ds
 CREATE	DEFAULT	zfs create	-vupo canmount=noauto	ds
 SNAP	DEFAULT	zfs snapshot	-r	flags ds_snap
