@@ -20,36 +20,210 @@ export ZELTA_SHARE="$REPO_ROOT/share/zelta"
 ## Build endpoints
 if [ -n "$SANDBOX_ZELTA_SRC_REMOTE" ]; then
     SANDBOX_ZELTA_SRC_EP="${SANDBOX_ZELTA_SRC_REMOTE}:${SANDBOX_ZELTA_SRC_DS}"
-    SANDBOX_ZELTA_SRC_CMD="ssh ${SANDBOX_ZELTA_SRC_REMOTE} "
 else
     SANDBOX_ZELTA_SRC_EP="$SANDBOX_ZELTA_SRC_DS"
 fi
 
 if [ -n "$SANDBOX_ZELTA_TGT_REMOTE" ]; then
     SANDBOX_ZELTA_TGT_EP="${SANDBOX_ZELTA_TGT_REMOTE}:${SANDBOX_ZELTA_TGT_DS}"
-    SANDBOX_ZELTA_SRC_CMD="ssh ${SANDBOX_ZELTA_SRC_REMOTE} "
 else
     SANDBOX_ZELTA_TGT_EP="$SANDBOX_ZELTA_TGT_DS"
 fi
 
-# We should determine if sudo is actually needed
-SANDBOX_ZELTA_SRC_CMD="${SANDBOX_ZELTA_SRC_CMD}sudo "
-SANDBOX_ZELTA_TGT_CMD="${SANDBOX_ZELTA_TGT_CMD}sudo "
-
-# Consider using unique tests
-# SANDBOX_ZELTA_SRC_DS="${SANDBOX_ZELTA_SRC_DS}/zelta_test_src_$$"
-# SANDBOX_ZELTA_TGT_DS="${SANDBOX_ZELTA_TGT_DS}/zelta_test_tgt_$$"
-
 export SANDBOX_ZELTA_SRC_POOL SANDBOX_ZELTA_TGT_POOL
 export SANDBOX_ZELTA_SRC_DS SANDBOX_ZELTA_TGT_DS
 export SANDBOX_ZELTA_SRC_EP SANDBOX_ZELTA_TGT_EP
-export SANDBOX_ZELTA_SRC_CMD SANDBOX_ZELTA_TGT_CMD
+
+
+## Command execution wrappers
+##############################
+
+# Execute command on source (remote or local with sudo)
+src_exec() {
+	if [ -n "$SANDBOX_ZELTA_SRC_REMOTE" ]; then
+		ssh -n "$SANDBOX_ZELTA_SRC_REMOTE" sudo "$@"
+	else
+		sudo "$@"
+	fi
+}
+
+# Execute command on target (remote or local with sudo)
+tgt_exec() {
+	if [ -n "$SANDBOX_ZELTA_TGT_REMOTE" ]; then
+		ssh -n "$SANDBOX_ZELTA_TGT_REMOTE" sudo "$@"
+	else
+		sudo "$@"
+	fi
+}
 
 
 ## Helpers
 ##########
 
-pools_defined() {
-    [ -z "$SANDBOX_ZELTA_SRC_POOL$SANDBOX_ZELTA_TGT_POOL" ]
-    
+# Check if source pool is a prefix of source dataset
+src_pool_matches_ds() {
+	case "$SANDBOX_ZELTA_SRC_DS" in
+		"$SANDBOX_ZELTA_SRC_POOL"/*) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
+# Check if target pool is a prefix of target dataset
+tgt_pool_matches_ds() {
+	case "$SANDBOX_ZELTA_TGT_DS" in
+		"$SANDBOX_ZELTA_TGT_POOL"/*) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
+# Check if source command with sudo works
+src_cmd_works() {
+	src_exec true
+}
+
+# Check if target command with sudo works
+tgt_cmd_works() {
+	tgt_exec true
+}
+
+# Skip if pools not configured (pure shell check, no external commands)
+skip_pools() {
+	[ -z "$SANDBOX_ZELTA_SRC_POOL" ] || [ -z "$SANDBOX_ZELTA_TGT_POOL" ]
+}
+
+skip_src_pool() {
+	if [ -n "$SANDBOX_ZELTA_SRC_POOL" ] && src_pool_matches_ds; then
+		return 1
+	fi
+    return 0
+}
+
+skip_tgt_pool() {
+	if [ -n "$SANDBOX_ZELTA_TGT_POOL" ] && tgt_pool_matches_ds; then
+		return 1
+	fi
+    return 0
+}
+
+nuke_pool() {
+	_pool_name="$1"
+	_exec_func="$2"
+	_pool_file=$($_exec_func pwd)/$_pool_name.img
+	$_exec_func zpool destroy -f "$_pool_name" >/dev/null 2>&1
+	$_exec_func rm -f "$_pool_file"
+	return 0
+}
+
+make_pool() {
+	_pool_name="$1"
+	_exec_func="$2"
+	_pool_file=$($_exec_func pwd)/$_pool_name.img
+	nuke_pool "$_pool_name" "$_exec_func"
+	$_exec_func truncate -s 1G "$_pool_file"
+	$_exec_func zpool create -f "$_pool_name" "$_pool_file"
+	return $?
+}
+
+nuke_src_pool() {
+	nuke_pool "$SANDBOX_ZELTA_SRC_POOL" src_exec
+	return $?
+}
+
+nuke_tgt_pool() {
+	nuke_pool "$SANDBOX_ZELTA_TGT_POOL" tgt_exec
+	return $?
+}
+
+make_src_pool() {
+	make_pool "$SANDBOX_ZELTA_SRC_POOL" src_exec || return 1
+	
+	# Grant ZFS permissions for source pool
+	if [ -n "$SANDBOX_ZELTA_SRC_REMOTE" ]; then
+		#ssh -n "$SANDBOX_ZELTA_SRC_REMOTE"
+		src_exec "zfs allow -u \$USER snapshot,bookmark,send,hold $SANDBOX_ZELTA_SRC_POOL"
+	else
+		zfs allow -u "$USER" snapshot,bookmark,send,hold "$SANDBOX_ZELTA_SRC_POOL"
+	fi
+	return $?
+}
+
+make_tgt_pool() {
+	make_pool "$SANDBOX_ZELTA_TGT_POOL" tgt_exec || return 1
+	
+	# Grant ZFS permissions for target pool
+	if [ -n "$SANDBOX_ZELTA_TGT_REMOTE" ]; then
+		#ssh -n "$SANDBOX_ZELTA_TGT_REMOTE" "zfs allow -u \$USER mount,create,rename $SANDBOX_ZELTA_TGT_POOL"
+		tgt_exec "zfs allow -u \$USER receive,mount,create,canmount,rename $SANDBOX_ZELTA_TGT_POOL"
+	else
+		zfs allow -u "$USER" receive:append,mount,create,canmount,rename "$SANDBOX_ZELTA_TGT_POOL"
+	fi
+	return $?
+}
+
+# Check if source dataset exists
+src_ds_exists() {
+	src_exec zfs list -H -o name "$SANDBOX_ZELTA_SRC_DS" >/dev/null 2>&1
+	return $?
+}
+
+# Check if target dataset exists
+tgt_ds_exists() {
+	tgt_exec zfs list -H -o name "$SANDBOX_ZELTA_TGT_DS" >/dev/null 2>&1
+	return $?
+}
+
+# Clean source dataset if it exists
+clean_src_ds() {
+	if src_ds_exists; then
+		src_exec zfs destroy -r "$SANDBOX_ZELTA_SRC_DS"
+		return $?
+	fi
+	return 0
+}
+
+# Clean target dataset if it exists
+clean_tgt_ds() {
+	if tgt_ds_exists; then
+		tgt_exec zfs destroy -r "$SANDBOX_ZELTA_TGT_DS"
+		return $?
+	fi
+	return 0
+}
+
+# Create divergent tree structure on source
+# Creates a dataset tree with snapshots that will diverge from target
+make_divergent_tree() {
+	clean_src_ds || return 1
+	clean_tgt_ds || return 1
+	
+	# Create encryption key
+	src_exec dd if=/dev/urandom bs=32 count=1 of=/tmp/zfs_test_enc_key >/dev/null 2>&1 || return 1
+	
+	# Create root dataset
+	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS" || return 1
+	
+	# Create child datasets
+	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub1" || return 1
+	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub2" || return 1
+	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub2/orphan" || return 1
+	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub3" || return 1
+	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub3/space\ name" || return 1
+	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub4" || return 1
+	src_exec zfs create -sV 100M "$SANDBOX_ZELTA_SRC_DS/sub4/zvol" || return 1
+	src_exec zfs create -o encryption=on -o keyformat=raw -o keylocation=file:///tmp/zfs_test_enc_key "$SANDBOX_ZELTA_SRC_DS/sub4/encrypted" || return 1
+	
+	# Replicate to target with @start snapshot
+	zelta backup --snap-name @start "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP" || return 1
+	
+	# Generate divergence
+	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub1/child" || return 1
+	tgt_exec zfs create -u "$SANDBOX_ZELTA_TGT_DS/sub1/kid" || return 1
+	src_exec zfs destroy "$SANDBOX_ZELTA_SRC_DS/sub2@start" || return 1
+	tgt_exec zfs snapshot "$SANDBOX_ZELTA_TGT_DS/sub3/space\ name@blocker" || return 1
+	tgt_exec zfs destroy "$SANDBOX_ZELTA_TGT_DS/sub4/zvol@start" || return 1
+	src_exec zfs snapshot "$SANDBOX_ZELTA_SRC_DS/sub3@two" || return 1
+	src_exec zfs snapshot "$SANDBOX_ZELTA_SRC_DS/sub2@two" || return 1
+	tgt_exec zfs snapshot "$SANDBOX_ZELTA_TGT_DS/sub2@two" || return 1
+	
+	return 0
 }

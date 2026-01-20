@@ -1,7 +1,7 @@
 ![Zelta Logo](https://zelta.space/index/zelta-banner.svg)
 
 # The Zelta Backup and Recovery Suite
-*Version v1.1, 2026-01-20*
+*Version 1.1, 2026-01-20*
 
 ---
 
@@ -39,7 +39,7 @@ Written in portable Bourne shell and AWK, Zelta runs anywhere ZFS runs. No packa
 
 ## Installation
 
-### From Source (Recommended for v1.1)
+### From Source (Recommended for Zelta 1.1)
 ```sh
 git clone https://github.com/bellhyve/zelta.git
 cd zelta
@@ -49,7 +49,7 @@ sudo ./install.sh
 ```
 
 ### FreeBSD Ports
-Zelta 1.0 (March 2024) is available in the FreeBSD Ports Collection. For the latest features, install from GitHub.
+Zelta 1.0.1_1 (March 2024) is available in the FreeBSD Ports Collection. For the latest features, install from GitHub.
 ```sh
 pkg install zelta
 ```

@@ -17,7 +17,7 @@ Describe 'Zelta no-op command checks'
             The status should be success
             The output should include 'Zelta'
         End
-        It 'shows help'
+        It 'shows man page'
             When run command zelta help
             The status should be success
             The output should include 'zelta(8)'
