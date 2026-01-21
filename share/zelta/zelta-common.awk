@@ -87,7 +87,6 @@ function json_write(_j, _depth, _fs, _rs, _val, _next_val) {
 	_fs = "  "
 	_rs = "\n"
 	_depth = 0
-	if (LoadSummaryVars) json_close_object()
 	for (_j = 1; _j <= JsonNum; _j++) {
 		_val = JsonOutput[_j]
 		_next_val = JsonOutput[_j+1]
@@ -127,6 +126,7 @@ function load_summary_data(	_tsv, _key, _val) {
         while (getline < _tsv) {
 		_key = $1
 		if ($2 == "Opt") _val = Opt[$3]
+		else if ($2 == "Summary") _val = Summary[$3]
 		else continue
 		if (!_val) {
 			if (!$4) continue

@@ -721,7 +721,7 @@ function create_recv_command(ds_suffix, src_idx, remote_ep,		 _cmd_arr, _cmd, _t
 
 # Runs a sync, collecting "zfs send" output
 function run_zfs_sync(ds_suffix,		_cmd, _stream_info, _message, _ds_snap,
-		      				_size, _time, _streams, _sync_msg) {
+		      				_size, _time, _streams, _sync_msg, _error_msg) {
 	# TO-DO: Make 'rotate' logic more explicit
 	# TO-DO: Dryrun mode probably goes here
 	if (Opt["VERB"] == "rotate" && !Action[ds_suffix, "can_rotate"]) return
@@ -772,7 +772,10 @@ function run_zfs_sync(ds_suffix,		_cmd, _stream_info, _message, _ds_snap,
 			report(LOG_INFO, "to abort a failed resume, run: 'zfs receive -A " Opt["SRC_DS"] ds_suffix"'")
 		}
 		else if ($0 ~ FAIL_ZFS_SEND_RECV_OUTPUT) {
-			report(LOG_ERROR, $0 ": " Opt["TGT_DS"] ds_suffix)
+			_error_msg = $0 ": " Opt["TGT_DS"] ds_suffix
+			report(LOG_ERROR, _error_msg)
+			ErrorMessagesList[++NumErrorMessages] = _error_msg
+			Summary["replicationErrorCode"] = 2
 			break
 		}
 		else if ($0 ~ WARN_ZFS_RECV_PROPS) {
@@ -785,8 +788,12 @@ function run_zfs_sync(ds_suffix,		_cmd, _stream_info, _message, _ds_snap,
 			report(LOG_INFO, $0)
 		else if ($0 ~ IGNORE_ZFS_SEND_OUTPUT) {}
 		else if ($0 ~ IGNORE_RESUME_OUTPUT) {}
-		else if (log_common_command_feedback() == LOG_ERROR)
+		else if (log_common_command_feedback() == LOG_ERROR) {
+			_error_msg = $0
+			ErrorMessagesList[++NumErrorMessages] = _error_msg
+			Summary["replicationErrorCode"] = 2
 			break
+		}
 	}
 	close(_cmd)
 	if (_streams) {
@@ -1052,6 +1059,11 @@ function print_summary(		_status, _i, _ds_suffix, _num_streams) {
 		for (_i = 1; _i <= NumStreamsSent; _i++) json_element(SentStreamsList[_i])
 		json_close_array()
 	}
+	if (NumErrorMessages && (Opt["LOG_MODE"] == "json")) {
+		json_new_array("errorMessages")
+		for (_i = 1; _i <= NumErrorMessages; _i++) json_element(ErrorMessagesList[_i])
+		json_close_array()
+	}
 }
 
 # Main planning function
@@ -1068,9 +1080,10 @@ BEGIN {
 	SNAP_LATEST   = 4
 
 	# Telemetry
-	DSTree["vers_major"]  = 1
-	DSTree["vers_minor"]  = 1
+	GlobalState["vers_major"]  = 1
+	GlobalState["vers_minor"]  = 1
 	Summary["startTime"]  = sys_time()
+	Summary["replicationErrorCode"] = 0
 
 	# Misc variables
 	DSTree["final_snapshot"]  = Opt["SRC_SNAP"]
@@ -1110,5 +1123,5 @@ BEGIN {
 	load_summary_vars()
 	print_summary()
 
-	stop()
+	stop(Summary["replicationErrorCode"])
 }

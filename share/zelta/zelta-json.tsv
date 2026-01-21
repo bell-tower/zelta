@@ -21,4 +21,5 @@ targetsResumed	Summary	targetsResumed
 replicationSize	Summary	replicationSize
 replicationStreamsSent	Summary	replicationStreamsSent
 replicationStreamsReceived	Summary	replicationStreamsReceived
+replicationErrorCode	Summary	replicationErrorCode
 replicationTime	Summary	replicationTime
