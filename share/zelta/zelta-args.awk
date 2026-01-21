@@ -181,6 +181,7 @@ function override_options(	_e) {
 }
 
 BEGIN {
+	Opt["LOG_MODE"] = ""
 	SUBOPT_TYPES["list"]  = 1
 	SUBOPT_TYPES["set"]   = 1
 	load_option_list()

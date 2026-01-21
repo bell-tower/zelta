@@ -59,6 +59,13 @@ The following options should be modified in the environment to ensure proper ins
 **LOG_MODE**
 :   Enable the specified log modes. Currently supported: 'text' (default) and 'json' (`zelta backup` related verbs only).
 
+# JSON OUTPUT OPTIONS
+
+**SYSTIME**
+:   Override the system time function for JSON timestamps. Required for mawk users, as mawk's `srand()` does not reliably return epoch time. Set to `date +%s` for compatibility. Not needed with gawk or original-awk (nawk/bwk).
+
+    Example: `ZELTA_SYSTIME='date +%s'`
+
 # SSH OPTIONS
 
 **REMOTE_COMMAND**

@@ -22,7 +22,6 @@ all	--help,-h,-?	USAGE		true
 all	--dryrun,-n	DRYRUN		true		show commands but do not run them
 all	--depth,-d	DEPTH		set		limit the recursion depth
 all	--exclude,-X	EXCLUDE		list		exclude source dataset or snapshot patterns
-all	--yule	YULE		true
 
 # Options for 'zelta backup' and other 'zfs send/recv/clone' verbs
 policy,backup,replicate,sync,rotate	--json,-j	LOG_MODE		set	json	json output

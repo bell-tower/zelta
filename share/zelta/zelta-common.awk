@@ -81,6 +81,8 @@ function report(mode, message,		_mode_message) {
 	_mode_message = mode SUBSEP message
 	print _mode_message | Opt["LOG_COMMAND"]
 	log_output_count++
+	if (mode <= 1)
+		ErrorMessagesList[++NumErrorMessages] = message
 }
 
 function json_write(_j, _depth, _fs, _rs, _val, _next_val) {
@@ -93,7 +95,7 @@ function json_write(_j, _depth, _fs, _rs, _val, _next_val) {
 		if (_val ~ /^[\]\}]/) _depth--
 		# Enable JSON_PRETTY or provide 'jq'-like output
 		if (Opt["JSON_PRETTY"]) printf str_rep(_fs, _depth)
-		printf(_val)
+		printf("%s", _val)
 		if (_next_val && _val !~ /[{\[]$/ && _next_val !~ /^[\]\}]/) {
 			printf(",")
 		}
@@ -152,6 +154,13 @@ function load_summary_vars(	_j) {
 	}
 }
 
+function json_write_array(		_name, _arr, _num, _i) {
+	if (!_num) return
+	json_new_array(_name)
+	for (_i = 1; _i <= _num; _i++) json_element(_arr[_i])
+	json_close_array()
+}
+
 function close_json_output() {
 	if (Opt["LOG_MODE"] == "json" && LoadSummaryVars) {
 		json_close_object()
@@ -162,9 +171,16 @@ function close_json_output() {
 function stop(_error_code, _error_msg) {
 	if (_error_msg) report(LOG_ERROR, _error_msg)
 	if (log_output_count) close(Opt["LOG_COMMAND"])
-	close_json_output()
-	if (JsonNum) json_write()
-	if (Opt["JSON_FILE"]) close(Opt["JSON_FILE"])
+	if (Opt["LOG_MODE"] == "json") {
+		#if (JsonNum) json_write()
+		load_summary_data()
+		load_summary_vars()
+		json_write_array("sentStreams", SentStreamsList, NumStreamsSent)
+		json_write_array("errorMessages", ErrorMessagesList, NumErrorMessages)
+		close_json_output()
+		json_write()
+		if (Opt["JSON_FILE"]) close(Opt["JSON_FILE"])
+	}
 	exit _error_code
 }
 
@@ -254,9 +270,14 @@ function glob_to_regex(r, s) {
 
 # systime() doesn't work on a lot of systems despite being in the POSIX spec.
 # This workaround might not be entirely portable either; needs QA or replacement
-function sys_time() {
-	srand();
-	return srand();
+function sys_time(    _time) {
+	if (Opt["SYSTIME"]) {
+		Opt["SYSTIME"] | getline _time
+		close(Opt["SYSTIME"])
+		return _time
+	}
+	srand()
+	return srand()
 }
 
 # Convert to a human-readable number
@@ -335,8 +356,17 @@ function build_command(action, vars, 		_remote_prefix, _cmd, _num_vars, _var_lis
 
 function get_snap_name(		_snap_name, _snap_cmd) {
 	_snap_name = Opt["SNAP_NAME"]
-	if (sub(/^['\"]*[$][(]/, "", _snap_name)) {
-		sub(/[])]['\"]*$/, "", _snap_name)
+	# Strip leading quote or double-quote if present
+	if (substr(_snap_name, 1, 1) == "'") {
+		_snap_name = substr(_snap_name, 2)
+		sub(/'$/, "", _snap_name)
+	} else if (substr(_snap_name, 1, 1) == "\"") {
+		_snap_name = substr(_snap_name, 2)
+		sub(/"$/, "", _snap_name)
+	}
+	# Check if it's a command substitution pattern
+	if (sub(/^\$\(/, "", _snap_name)) {
+		sub(/\)$/, "", _snap_name)
 		_snap_cmd = _snap_name
 		_snap_cmd | getline _snap_name
 		close(_snap_cmd)

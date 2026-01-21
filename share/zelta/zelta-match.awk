@@ -71,12 +71,12 @@ function add_written() {
 }
 
 # TO-DO: Add this feature to build_command()
-function wrap_time_cmd(cmd, _cmd_part, _p) {
-	cmd_part[_p++]	= Opt["SH_COMMAND_PREFIX"]
-	cmd_part[_p++]	= Opt["TIME_COMMAND"]
-	cmd_part[_p++]	= cmd
-	cmd_part[_p++]	= Opt["SH_COMMAND_SUFFIX"]
-	cmd		= arr_join(_cmd_part)
+function wrap_time_cmd(cmd,		_cmd_part, _p) {
+	_cmd_part[++_p] = Opt["SH_COMMAND_PREFIX"]
+	_cmd_part[++_p] = Opt["TIME_COMMAND"]
+	_cmd_part[++_p] = cmd
+	_cmd_part[++_p] = Opt["SH_COMMAND_SUFFIX"]
+	cmd             = arr_join(_cmd_part)
 	return cmd
 }
 
@@ -93,7 +93,7 @@ function zfs_list_cmd(endpoint,		_ep, _ds, _remote, _cmd) {
 		_cmd_arr["flags"] = "-d" Opt["DEPTH"]
 	_cmd			= build_command("LIST", _cmd_arr)
 	if (Opt["DRYRUN"]) _cmd	= report(LOG_NOTICE, "+ " _cmd)
-	if (Opt["TIME"]) _cmd	= wrap_time_cmd(_cmd)
+	if (Opt["CHECK_TIME"]) _cmd	= wrap_time_cmd(_cmd)
 	_cmd			= str_add(_cmd, CAPTURE_OUTPUT)
 	return _cmd
 }
@@ -105,7 +105,7 @@ function pipe_zfs_list_source(		_match_cmd, _src_list_cmd) {
 	_src_list_cmd	= zfs_list_cmd(Source)
 	if (Opt["DRYRUN"]) {
 		zfs_list_cmd(Target)
-		stop()
+		stop(0)
 	}
 	report(LOG_DEBUG, "`"_match_cmd"`")
 	report(LOG_INFO, "listing source: " Source["ID"])
@@ -782,6 +782,12 @@ function summary(	_r, _line, _ds_suffix, _c, _key, _val, _cell) {
 		if ((NumDSPair > 1) && (Global["summary"] ~ /,/))
 			report(LOG_NOTICE, NumDSPair " total datasets compared")
 	}
+	if (Opt["CHECK_TIME"]) {
+		if (Source["list_time"])
+			report(LOG_NOTICE, "SOURCE_LIST_TIME:\t" Source["list_time"])
+		if (Target["list_time"])
+			report(LOG_NOTICE, "TARGET_LIST_TIME:\t" Target["list_time"])
+	}
 }
 
 ## Main Workflow Rules
@@ -821,7 +827,7 @@ BEGIN {
 		Target["ds_length"]        = length(Target["DS"]) + 1
 		Source["ds_length"]        = length(Source["DS"]) + 1
 		Source["list_time"]        = 0
-		Target["list_name"]        = 0
+		Target["list_time"]        = 0
 		load_exclude_patterns()
 		run_zfs_list_target()
 		# Continues to process the incoming pipes 'pipe_zfs_list_source()'

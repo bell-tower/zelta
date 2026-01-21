@@ -4,6 +4,10 @@ All notable changes to Zelta will be documented in this file.
 
 ## [1.1.0] - 2026-01-20
 
+### Known Issues
+- **JSON field naming**: Uses mixed camelCase/snake_case conventions. Will align with OpenZFS `zfs list -j` standards in 1.2 or 1.3 after upstream coordination.
+- **mawk timestamps**: JSON timestamps require `ZELTA_SYSTIME='date +%s'` when using mawk. gawk and original-awk work without this setting.
+
 ### Added
 - **Commands**: `zelta revert` for in-place rollbacks via rename and clone.
 - **Commands**: `zelta rotate` for divergent version handling, evolved from original `--rotate` flag.
@@ -41,6 +45,7 @@ All notable changes to Zelta will be documented in this file.
 - Fixed namespace configuration and repeated targets in `zelta policy`.
 - Workaround for GNU Awk 5.2.1 bug.
 - Resume token handling and other context-aware ZFS option handling.
+- Added `SYSTIME` option for mawk compatibility with JSON timestamps.
 
 ### Deprecated
 - `zelta endpoint` and other functions have been merged into the core library.

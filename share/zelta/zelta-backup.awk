@@ -730,8 +730,13 @@ function run_zfs_sync(ds_suffix,		_cmd, _stream_info, _message, _ds_snap,
 	IGNORE_RESUME_OUTPUT = "^nvlist version|^\t(fromguid|object|offset|bytes|toguid|toname|embedok|compressok)"
 	WARN_ZFS_RECV_PROPS = "cannot receive .* property"
 	FAIL_ZFS_SEND_RECV_OUTPUT = "^(cannot receive .* stream|cannot send|missing.*argument)"
-	_message            = DSPair[ds_suffix, "source_start"] ? DSPair[ds_suffix, "source_start"]"::" : ""
-	_message            = _message DSPair[ds_suffix, "source_end"]
+	_message            = Source["DS"] ds_suffix
+	if (DSPair[ds_suffix, "source_start"])
+		_message        = _message DSPair[ds_suffix, "source_start"] "%" substr(DSPair[ds_suffix, "source_end"], 2)
+	else
+		_message        = _message DSPair[ds_suffix, "source_end"]
+	#_message            = _message (DSPair[ds_suffix, "source_start"] ? DSPair[ds_suffix, "source_start"]"%" : "")
+	#_message            = _message (DSPair[ds_suffix, "source_end"]
 	_ds_snap            = Opt["SRC_DS"] ds_suffix DSPair[ds_suffix, "source_end"]
 	_sync_msg           = "synced"
 	SentStreamsList[++NumStreamsSent] = _message
@@ -774,7 +779,6 @@ function run_zfs_sync(ds_suffix,		_cmd, _stream_info, _message, _ds_snap,
 		else if ($0 ~ FAIL_ZFS_SEND_RECV_OUTPUT) {
 			_error_msg = $0 ": " Opt["TGT_DS"] ds_suffix
 			report(LOG_ERROR, _error_msg)
-			ErrorMessagesList[++NumErrorMessages] = _error_msg
 			Summary["replicationErrorCode"] = 2
 			break
 		}
@@ -790,7 +794,6 @@ function run_zfs_sync(ds_suffix,		_cmd, _stream_info, _message, _ds_snap,
 		else if ($0 ~ IGNORE_RESUME_OUTPUT) {}
 		else if (log_common_command_feedback() == LOG_ERROR) {
 			_error_msg = $0
-			ErrorMessagesList[++NumErrorMessages] = _error_msg
 			Summary["replicationErrorCode"] = 2
 			break
 		}
@@ -1054,16 +1057,6 @@ function print_summary(		_status, _i, _ds_suffix, _num_streams) {
 	_num_streams	= Summary["replicationStreamsReceived"]
 	_seconds	= Summary["replicationTime"]
 	if (_num_streams) report(LOG_NOTICE, _bytes_sent " sent, "_num_streams" streams received in "_seconds" seconds")
-	if (_num_streams && (Opt["LOG_MODE"] == "json")) {
-		json_new_array("sentStreams")
-		for (_i = 1; _i <= NumStreamsSent; _i++) json_element(SentStreamsList[_i])
-		json_close_array()
-	}
-	if (NumErrorMessages && (Opt["LOG_MODE"] == "json")) {
-		json_new_array("errorMessages")
-		for (_i = 1; _i <= NumErrorMessages; _i++) json_element(ErrorMessagesList[_i])
-		json_close_array()
-	}
 }
 
 # Main planning function
@@ -1084,6 +1077,8 @@ BEGIN {
 	GlobalState["vers_minor"]  = 1
 	Summary["startTime"]  = sys_time()
 	Summary["replicationErrorCode"] = 0
+	Summary["replicationStreamsReceived"] = 0
+	Summary["replicationStreamsSent"] = 0
 
 	# Misc variables
 	DSTree["final_snapshot"]  = Opt["SRC_SNAP"]
@@ -1119,8 +1114,6 @@ BEGIN {
 	Summary["runTime"]			= Summary["endTime"] - Summary["startTime"]
 
 	compute_eligibility()
-	load_summary_data()
-	load_summary_vars()
 	print_summary()
 
 	stop(Summary["replicationErrorCode"])
