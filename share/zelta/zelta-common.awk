@@ -152,10 +152,17 @@ function load_summary_vars(	_j) {
 	}
 }
 
+function close_json_output() {
+	if (Opt["LOG_MODE"] == "json" && LoadSummaryVars) {
+		json_close_object()
+	}
+}
+
 # Flush buffers and quit
 function stop(_error_code, _error_msg) {
 	if (_error_msg) report(LOG_ERROR, _error_msg)
 	if (log_output_count) close(Opt["LOG_COMMAND"])
+	close_json_output()
 	if (JsonNum) json_write()
 	if (Opt["JSON_FILE"]) close(Opt["JSON_FILE"])
 	exit _error_code
