@@ -155,7 +155,7 @@ make_tgt_pool() {
 		#ssh -n "$SANDBOX_ZELTA_TGT_REMOTE" "zfs allow -u \$USER mount,create,rename $SANDBOX_ZELTA_TGT_POOL"
 		tgt_exec "zfs allow -u \$USER receive,mount,create,canmount,rename $SANDBOX_ZELTA_TGT_POOL"
 	else
-		zfs allow -u "$USER" receive:append,mount,create,canmount,rename "$SANDBOX_ZELTA_TGT_POOL"
+		zfs allow -u "$USER" receive,mount,create,canmount,rename "$SANDBOX_ZELTA_TGT_POOL"
 	fi
 	return $?
 }
