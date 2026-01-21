@@ -43,7 +43,7 @@ src_exec() {
 	if [ -n "$SANDBOX_ZELTA_SRC_REMOTE" ]; then
 		ssh -n "$SANDBOX_ZELTA_SRC_REMOTE" sudo "$@"
 	else
-		sudo "$@"
+		sudo sh -c "$*"
 	fi
 }
 
@@ -52,7 +52,7 @@ tgt_exec() {
 	if [ -n "$SANDBOX_ZELTA_TGT_REMOTE" ]; then
 		ssh -n "$SANDBOX_ZELTA_TGT_REMOTE" sudo "$@"
 	else
-		sudo "$@"
+		sudo sh -c "$*"
 	fi
 }
 
