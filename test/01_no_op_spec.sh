@@ -1,4 +1,4 @@
-# shellcheck shell=sh
+# Check Zelta usage, help, version, and `zelta match` option processing
 
 Describe 'Zelta no-op command checks'
     Describe 'zelta command'

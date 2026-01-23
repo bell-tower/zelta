@@ -73,6 +73,28 @@ tgt_exec() {
 ## Helpers
 ##########
 
+check_install() {
+    _installed=1
+    if [ ! -x "$ZELTA_BIN/zelta" ]; then
+        echo missing: "$ZELTA_BIN/zelta" >/dev/stderr
+        _installed=0
+    fi
+    if [ ! -f "$ZELTA_SHARE/zelta-common.awk" ]; then
+        echo missing: "$ZELTA_SHARE/zelta-common.awk" >/dev/stderr
+        _installed=0
+    fi
+    if [ ! -f "$ZELTA_DOC/man8/zelta.8" ]; then
+        echo missing: "$ZELTA_DOC/man8/zelta.8" >/dev/stderr
+        _installed=0
+    fi
+    if [ ! -f "$ZELTA_ETC/zelta.conf.example" ]; then
+        echo missing: "$ZELTA_ETC/zelta.conf.example" >/dev/stderr
+        _installed=0
+    fi
+    [ $_installed = 1 ] && return 0
+    return 1
+}
+
 # Make sure the installer worked and clean up carefully
 cleanup_temp_install() {
     find "$SANDBOX_ZELTA_TMP_DIR" -type f | wc -w
@@ -87,6 +109,16 @@ cleanup_temp_install() {
 
 skip_if_root() {
 	[ "$(id -u)" -eq 0 ]
+}
+
+backup_no_op_check() {
+    _options_all="-v --verbose -q --quiet --log-level=2 --log-mode=json --dryrun -n --depth 2 -d2 -X/sub3"
+    _options_backup="--json -j --resume --snap-name=@test --snapshot --pull -i -o compression=zstd -x mountpoint"
+    zelta backup $_options_all $_options_backup "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP"
+}
+
+backup_check_json() {
+    backup_no_op_check 2>/dev/null | jq -re .output_version.command
 }
 
 # Check if source pool is a prefix of source dataset

@@ -1028,9 +1028,10 @@ function run_revert(		_ds) {
 }
 
 # 'zelta backup' and 'zelta sync' orchestration
-function run_backup(		_i, _ds_suffix, _syncable) {
+function run_backup(		_i, _ds_suffix, _syncing, _syncable) {
+	_syncing = Opt["DRYRUN"] ? "would sync " : "syncing "
 	if (DSTree["syncable"])
-		report(LOG_NOTICE, "syncing " NumDS " datasets")
+		report(LOG_NOTICE, _syncing NumDS " datasets")
 	for (_i = 1; _i <= NumDS; _i++) {
 		_ds_suffix = DSList[_i]
 		# Run first pass sync
