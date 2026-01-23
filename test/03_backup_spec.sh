@@ -4,10 +4,11 @@ Describe 'Backup tests'
         When call backup_no_op_check
         The status should be success
         # In json mode, all unsuppressed notices will be stderr
-        The error should include '+ '
-        The error should include 'sub4@start'
-        The error should not include 'sub3'
-        The error should include '@test'
+        The error should include 'would snapshot'
+        The error should include 'zfs snapshot'
+        The error should include 'diverged'
+        The error should not include 'snapshotting'
+        The error should not include 'error:'
         # Check json
         The output should include 'output_version'
     End
