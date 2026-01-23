@@ -11,11 +11,9 @@ Describe 'Cleanup'
             The status should be success
         End
     End
-
     Describe 'Installation cleanup'
         It 'uninstall script'
-            Skip if 'avoid systemwide uninstall' skip_if_root
-            When run sh uninstall.sh
+            When run sh uninstall.sh env
             The status should be success
             The output should include 'removing'
         End
