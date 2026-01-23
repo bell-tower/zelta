@@ -165,7 +165,7 @@ function load_config(		_conf_error, _arr, _context, _job, _line_num,
 		if (split($0, _arr, "#")) {
 			$0 = _arr[1]
 		}
-		gsub(/[  ]+$/, "", $0)
+		sub(/[ \t]+$/, "")
 		if (! $0) { continue }
 
 		# Global options
