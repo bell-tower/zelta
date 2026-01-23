@@ -5,6 +5,27 @@
 # Removes Zelta installation files, including legacy paths.
 # Checks both system-wide and user installation locations.
 
+usage() {
+	cat <<-EOF
+	Usage: uninstall.sh [PHASE...]
+	
+	Remove Zelta installation files from specified locations.
+	
+	PHASES:
+	  system    Remove system-wide installation (/usr/local/*)
+	  home      Remove default user installation (~/.local/*, ~/bin)
+	  env       Remove custom installation from ZELTA_* environment variables
+	  all       Remove from all locations (default if no phase specified)
+	
+	EXAMPLES:
+	  uninstall.sh              # Remove from all locations
+	  uninstall.sh system       # Remove only system-wide installation
+	  uninstall.sh home env     # Remove user and custom installations
+	
+	EOF
+	exit 0
+}
+
 remove_if_exists() {
 	if [ -L "$1" ] || [ -f "$1" ] && [ -w "$1" ]; then
 		echo "- removing: $1"
@@ -136,43 +157,88 @@ zelta_tidy() {
 	fi
 }
 
+# Parse arguments
+run_system=0
+run_home=0
+run_env=0
+
+if [ $# -eq 0 ]; then
+	# No arguments: run all phases (default behavior)
+	run_system=1
+	run_home=1
+	run_env=1
+else
+	# Parse phase arguments
+	for arg in "$@"; do
+		case "$arg" in
+			system)
+				run_system=1
+				;;
+			home)
+				run_home=1
+				;;
+			env)
+				run_env=1
+				;;
+			all)
+				run_system=1
+				run_home=1
+				run_env=1
+				;;
+			-h|--help|help)
+				usage
+				;;
+			*)
+				echo "Error: Unknown phase '$arg'"
+				echo "Run 'uninstall.sh --help' for usage information."
+				exit 1
+				;;
+		esac
+	done
+fi
+
 echo "Uninstalling Zelta"
 echo "=================="
 echo
 
 # Phase 1: System-wide installation (if root or accessible)
-zelta_tidy "System-wide" \
-	"/usr/local/bin" \
-	"/usr/local/sbin" \
-	"/usr/local/share/zelta" \
-	"/usr/local/etc/zelta" \
-	"/usr/local/man" \
-	"/usr/local/share/man"
-
+if [ $run_system -eq 1 ]; then
+	zelta_tidy "System-wide" \
+		"/usr/local/bin" \
+		"/usr/local/sbin" \
+		"/usr/local/share/zelta" \
+		"/usr/local/etc/zelta" \
+		"/usr/local/man" \
+		"/usr/local/share/man"
+fi
 
 # Phase 2: Default user installation
-zelta_tidy "User default" \
-	"$HOME/bin" \
-	"" \
-	"$HOME/.local/share/zelta" \
-	"$HOME/.config/zelta" \
-	"$HOME/.local/share/zelta/doc" \
-	"$HOME/.local/share/man"
+if [ $run_home -eq 1 ]; then
+	zelta_tidy "User default" \
+		"$HOME/bin" \
+		"" \
+		"$HOME/.local/share/zelta" \
+		"$HOME/.config/zelta" \
+		"$HOME/.local/share/zelta/doc" \
+		"$HOME/.local/share/man"
+fi
 
 # Phase 3: Custom paths from environment (if set and different)
-if [ -n "$ZELTA_BIN" ] || [ -n "$ZELTA_SHARE" ] || [ -n "$ZELTA_ETC" ]; then
-	custom_bin="${ZELTA_BIN:-$HOME/bin}"
-	custom_share="${ZELTA_SHARE:-$HOME/.local/share/zelta}"
-	custom_etc="${ZELTA_ETC:-$HOME/.config/zelta}"
-	custom_doc="${ZELTA_DOC:-$custom_share/doc}"
-	
-zelta_tidy "Custom environment" \
-	"$custom_bin" \
-	"" \
-	"$custom_share" \
-	"$custom_etc" \
-	"$custom_doc" \
-	""
+if [ $run_env -eq 1 ]; then
+	if [ -n "$ZELTA_BIN" ] || [ -n "$ZELTA_SHARE" ] || [ -n "$ZELTA_ETC" ]; then
+		custom_bin="${ZELTA_BIN:-$HOME/bin}"
+		custom_share="${ZELTA_SHARE:-$HOME/.local/share/zelta}"
+		custom_etc="${ZELTA_ETC:-$HOME/.config/zelta}"
+		custom_doc="${ZELTA_DOC:-$custom_share/doc}"
+		
+		zelta_tidy "Custom environment" \
+			"$custom_bin" \
+			"" \
+			"$custom_share" \
+			"$custom_etc" \
+			"$custom_doc" \
+			""
+	fi
 fi
 
 echo
