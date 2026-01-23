@@ -12,10 +12,23 @@
 #
 # If pools/hosts are not configured, only basic sanity tests run.
 
-## Use repo's zelta
-REPO_ROOT="$SHELLSPEC_PROJECT_ROOT"
-export PATH="$REPO_ROOT/bin:$PATH"
-export ZELTA_SHARE="$REPO_ROOT/share/zelta"
+## Setup temporary installation for testing
+#############################################
+
+export SANDBOX_ZELTA_TMP_DIR="/tmp/zelta$$"
+export ZELTA_BIN="$SANDBOX_ZELTA_TMP_DIR/bin"
+export ZELTA_SHARE="$SANDBOX_ZELTA_TMP_DIR/share"
+export ZELTA_ETC="$SANDBOX_ZELTA_TMP_DIR/etc"
+export ZELTA_DOC="$SANDBOX_ZELTA_TMP_DIR/man"
+export PATH="$ZELTA_BIN:$PATH"
+
+
+# We could use the repo dirs, but better to test installation
+# use_repo_zelta() {
+# 	REPO_ROOT="$SHELLSPEC_PROJECT_ROOT"
+# 	export PATH="$REPO_ROOT/bin:$PATH"
+# 	export ZELTA_SHARE="$REPO_ROOT/share/zelta"
+# }
 
 ## Build endpoints
 if [ -n "$SANDBOX_ZELTA_SRC_REMOTE" ]; then
@@ -59,6 +72,22 @@ tgt_exec() {
 
 ## Helpers
 ##########
+
+# Make sure the installer worked and clean up carefully
+cleanup_temp_install() {
+    find "$SANDBOX_ZELTA_TMP_DIR" -type f | wc -w
+	if [ -d "$SANDBOX_ZELTA_TMP_DIR" ]; then
+		rm "$ZELTA_ETC"/zelta.*
+		rmdir "$SANDBOX_ZELTA_TMP_DIR"/*
+		rmdir "$SANDBOX_ZELTA_TMP_DIR"
+    	[ ! -e "SANDBOX_ZELTA_TMP_DIR" ] && return 0
+	fi
+	return 1
+}
+
+skip_if_root() {
+	[ "$(id -u)" -eq 0 ]
+}
 
 # Check if source pool is a prefix of source dataset
 src_pool_matches_ds() {
