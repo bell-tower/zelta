@@ -1,12 +1,24 @@
 Describe 'Cleanup'
+    Describe 'Dataset cleanup'
+        It 'destroy source dataset'
+            Skip if 'dataset not created in this run' tmpfile_check divergent_tree_created
+            When call clean_src_ds
+            The status should be success
+        End
+        It 'destroy target dataset'
+            Skip if 'dataset not created in this run' tmpfile_check divergent_tree_created
+            When call clean_tgt_ds
+            The status should be success
+        End
+    End
     Describe 'Pool cleanup'
         It 'destroy source'
-            Skip if 'no pools defined' skip_pools
+            Skip if 'pool not created in this run' tmpfile_check src_pool_created
             When call nuke_src_pool
             The status should be success
         End
         It 'destroy target'
-            Skip if 'no pools defined' skip_pools
+            Skip if 'pool not created in this run' tmpfile_check tgt_pool_created
             When call nuke_tgt_pool
             The status should be success
         End

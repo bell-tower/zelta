@@ -16,6 +16,7 @@
 #############################################
 
 export SANDBOX_ZELTA_TMP_DIR="/tmp/zelta$$"
+export SANDBOX_ZELTA_PROCNUM="$$"
 export ZELTA_BIN="$SANDBOX_ZELTA_TMP_DIR/bin"
 export ZELTA_SHARE="$SANDBOX_ZELTA_TMP_DIR/share"
 export ZELTA_ETC="$SANDBOX_ZELTA_TMP_DIR/etc"
@@ -73,6 +74,28 @@ tgt_exec() {
 ## Helpers
 ##########
 
+check_install() {
+    _installed=1
+    if [ ! -x "$ZELTA_BIN/zelta" ]; then
+        echo missing: "$ZELTA_BIN/zelta" >/dev/stderr
+        _installed=0
+    fi
+    if [ ! -f "$ZELTA_SHARE/zelta-common.awk" ]; then
+        echo missing: "$ZELTA_SHARE/zelta-common.awk" >/dev/stderr
+        _installed=0
+    fi
+    if [ ! -f "$ZELTA_DOC/man8/zelta.8" ]; then
+        echo missing: "$ZELTA_DOC/man8/zelta.8" >/dev/stderr
+        _installed=0
+    fi
+    if [ ! -f "$ZELTA_ETC/zelta.conf.example" ]; then
+        echo missing: "$ZELTA_ETC/zelta.conf.example" >/dev/stderr
+        _installed=0
+    fi
+    [ $_installed = 1 ] && return 0
+    return 1
+}
+
 # Make sure the installer worked and clean up carefully
 cleanup_temp_install() {
     find "$SANDBOX_ZELTA_TMP_DIR" -type f | wc -w
@@ -85,8 +108,26 @@ cleanup_temp_install() {
 	return 1
 }
 
+tmpfile_touch() {
+    touch "${SHELLSPEC_TMPBASE}/${1}_${SANDBOX_ZELTA_PROCNUM}"
+}
+
+tmpfile_check() {
+    [ ! -f "${SHELLSPEC_TMPBASE}/${1}_${SANDBOX_ZELTA_PROCNUM}" ]
+}
+
 skip_if_root() {
 	[ "$(id -u)" -eq 0 ]
+}
+
+backup_no_op_check() {
+    _options_all="-v --verbose -q --quiet --log-level=2 --log-mode=json --dryrun -n --depth 2 -d2 -X/sub3"
+    _options_backup="--json -j --resume --snap-name=@test --snapshot --pull -i -o compression=zstd -x mountpoint"
+    zelta backup $_options_all $_options_backup "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP"
+}
+
+backup_check_json() {
+    backup_no_op_check 2>/dev/null | jq -re .output_version.command
 }
 
 # Check if source pool is a prefix of source dataset
@@ -147,7 +188,7 @@ make_pool() {
 	_pool_name="$1"
 	_exec_func="$2"
 	_pool_file=$($_exec_func pwd)/$_pool_name.img
-	nuke_pool "$_pool_name" "$_exec_func"
+	#nuke_pool "$_pool_name" "$_exec_func"
 	$_exec_func truncate -s 1G "$_pool_file"
 	$_exec_func zpool create -f "$_pool_name" "$_pool_file"
 	return $?
@@ -165,7 +206,8 @@ nuke_tgt_pool() {
 
 make_src_pool() {
 	make_pool "$SANDBOX_ZELTA_SRC_POOL" src_exec || return 1
-	
+	tmpfile_touch "src_pool_created"
+
 	# Grant ZFS permissions for source pool
 	if [ -n "$SANDBOX_ZELTA_SRC_REMOTE" ]; then
 		#ssh -n "$SANDBOX_ZELTA_SRC_REMOTE"
@@ -178,6 +220,7 @@ make_src_pool() {
 
 make_tgt_pool() {
 	make_pool "$SANDBOX_ZELTA_TGT_POOL" tgt_exec || return 1
+	tmpfile_touch "tgt_pool_created"
 	
 	# Grant ZFS permissions for target pool
 	if [ -n "$SANDBOX_ZELTA_TGT_REMOTE" ]; then
@@ -204,6 +247,7 @@ tgt_ds_exists() {
 # Clean source dataset if it exists
 clean_src_ds() {
 	if src_ds_exists; then
+	    src_exec rm -f /tmp/zfs_test_enc_key_${SANDBOX_ZELTA_PROCNUM}
 		src_exec zfs destroy -r "$SANDBOX_ZELTA_SRC_DS"
 		return $?
 	fi
@@ -222,12 +266,22 @@ clean_tgt_ds() {
 # Create divergent tree structure on source
 # Creates a dataset tree with snapshots that will diverge from target
 make_divergent_tree() {
-	clean_src_ds || return 1
-	clean_tgt_ds || return 1
+    if src_ds_exists; then
+        echo "$SANDBOX_ZELTA_TGT_DS" already exists >/dev/stderr
+        return 1
+    fi
+    if tgt_ds_exists; then
+        echo "$SANDBOX_ZELTA_SRC_DS" already exists >/dev/stderr
+        return 1
+    fi
 	
+	# If we get this far, it will be safe to attempt to clean it up
+	tmpfile_touch "divergent_tree_created"
+
 	# Create encryption key
-	src_exec dd if=/dev/urandom bs=32 count=1 of=/tmp/zfs_test_enc_key >/dev/null 2>&1 || return 1
-	
+	src_exec dd if=/dev/urandom bs=32 count=1 of="/tmp/zfs_test_enc_key_${SANDBOX_ZELTA_PROCNUM}" >/dev/null 2>&1 || return 1
+
+
 	# Create root dataset
 	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS" || return 1
 	
@@ -239,7 +293,7 @@ make_divergent_tree() {
 	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub3/space\ name" || return 1
 	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub4" || return 1
 	src_exec zfs create -sV 100M "$SANDBOX_ZELTA_SRC_DS/sub4/zvol" || return 1
-	src_exec zfs create -o encryption=on -o keyformat=raw -o keylocation=file:///tmp/zfs_test_enc_key "$SANDBOX_ZELTA_SRC_DS/sub4/encrypted" || return 1
+	src_exec zfs create -o encryption=on -o keyformat=raw -o "keylocation=file:///tmp/zfs_test_enc_key_${SANDBOX_ZELTA_PROCNUM}" "$SANDBOX_ZELTA_SRC_DS/sub4/encrypted" || return 1
 	
 	# Replicate to target with @start snapshot
 	zelta backup --snap-name @start "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP" || return 1
