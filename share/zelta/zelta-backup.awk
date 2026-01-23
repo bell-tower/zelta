@@ -391,20 +391,24 @@ function compute_eligibility(           _i, _ds_suffix, _src_idx, _tgt_idx,
 ######################################
 
 # Decide whether or not to take a snapshot; if so, returns a reason
-function should_snapshot() {
+function should_snapshot(		_snapshotting) {
 	# Only attempt a snapshot once
         if (DSTree["snapshot_attempted"]) return
+	if (Opt["DRYRUN"])
+		_snapshotting = "would snapshot: "
+	else
+		_snapshotting = "snapshotting: "
 	# Snapshot mode is "ALWAYS" or provide a reason
 	else if (Opt["SNAP_MODE"] == "ALWAYS")
-		return "snapshotting: "
+		return _snapshotting
 	else if (Opt["SNAP_MODE"] != "IF_NEEDED")
 		return 0
 	else if (DSTree["snapshot_needed"] == SNAP_WRITTEN)
-		return "source is written; snapshotting: "
+		return "source is written; " _snapshotting
 	else if (DSTree["snapshot_needed"] == SNAP_MISSING)
-		return "missing source snapshot; snapshotting: "
+		return "missing source snapshot; " _snapshotting
 	else if (DSTree["snapshot_needed"] == SNAP_LATEST)
-		return "action requires a snapshot delta; snapshotting: "
+		return "action requires a snapshot delta; " _snapshotting
 	else return 0
 }
 

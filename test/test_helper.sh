@@ -103,7 +103,7 @@ cleanup_temp_install() {
 		rm "$ZELTA_ETC"/zelta.*
 		rmdir "$SANDBOX_ZELTA_TMP_DIR"/*
 		rmdir "$SANDBOX_ZELTA_TMP_DIR"
-    	[ ! -e "SANDBOX_ZELTA_TMP_DIR" ] && return 0
+    	[ ! -e "$SANDBOX_ZELTA_TMP_DIR" ] && return 0
 	fi
 	return 1
 }
