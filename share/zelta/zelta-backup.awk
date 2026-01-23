@@ -398,8 +398,9 @@ function should_snapshot(		_snapshotting) {
 		_snapshotting = "would snapshot: "
 	else
 		_snapshotting = "snapshotting: "
+
 	# Snapshot mode is "ALWAYS" or provide a reason
-	else if (Opt["SNAP_MODE"] == "ALWAYS")
+	if (Opt["SNAP_MODE"] == "ALWAYS")
 		return _snapshotting
 	else if (Opt["SNAP_MODE"] != "IF_NEEDED")
 		return 0
