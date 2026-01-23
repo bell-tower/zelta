@@ -2,7 +2,7 @@
 
 This document defines the coding standards for the Zelta Backup and Recovery Suite. Zelta is designed for **portability** and **safety** and is written in portable Bourne Shell and Awk.
 
-Lean towards POSIX and "Original Awk" standards, but don't adhere obsessively to any single standard. Some POSIX features are absent from certain OS defaults, so everything needs testing on real systems.
+Lean toward POSIX and "Original Awk" standards, but don't adhere obsessively to any single standard. Some POSIX features are absent from certain OS defaults, so everything needs testing on real systems.
 
 ---
 

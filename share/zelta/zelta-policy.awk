@@ -83,7 +83,7 @@ function set_var(option_list, var, val) {
 	var = toupper(var)
 	if (var in PolicyLegacy) {
 		# TO-DO: Legacy warning
-		report(LOG_DEBUG, "reassigning option '"var"' to '"PolicyLegacy[var]"'")
+		report(LOG_DEBUG, "reassigning the option '"var"' to '"PolicyLegacy[var]"'")
 		var = PolicyLegacy[var]
 	}
 	if (!(var in PolicyOpt)) usage("unknown option: "var)
@@ -165,7 +165,7 @@ function load_config(		_conf_error, _arr, _context, _job, _line_num,
 		if (split($0, _arr, "#")) {
 			$0 = _arr[1]
 		}
-		gsub(/[ \t]+$/, "", $0)
+		gsub(/[  ]+$/, "", $0)
 		if (! $0) { continue }
 
 		# Global options

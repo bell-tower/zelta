@@ -44,7 +44,7 @@ function usage_prune(message) {
 	STDERR = "/dev/stderr"
 	printf (message ? message "\n" : "") "usage:"                                                       > STDERR
 	print "\tprune [--keep-snap-num=N] [--keep-snap-days=N] [-X pattern] SOURCE TARGET\n"               > STDERR
-	print "Identifies snapshots on SOURCE that exist on TARGET\n"                                       > STDERR
+	print "Identifies snapshots on SOURCE that exist on TARGET.\n"                                       > STDERR
 	print "Options:"                                                                                    > STDERR
 	print "\t--keep-snap-num=N    Minimum number of snapshots to keep after match (default: 10)"        > STDERR
 	print "\t--keep-snap-days=N   Minimum age in days for snapshot deletion (default: 90)"              > STDERR

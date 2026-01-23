@@ -196,7 +196,7 @@ For commercial support, custom feature development, and consulting on secure, hi
 
 ## Roadmap
 
-Zelta 1.1 represents a major refactor improving POSIX compliance, portability, and code maintainability. The following features are already used internally or by Bell Tower clients and will be upstreamed by Q2 2026.
+Zelta 1.1 represents a major refactor that improves POSIX compliance, portability, and code maintainability. The following features are already used internally or by Bell Tower clients and will be upstreamed by Q2 2026.
 
 ### Features In Development
 

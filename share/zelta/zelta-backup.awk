@@ -256,7 +256,7 @@ function explain_sync_status(ds_suffix,		_tgt_ds) {
 		report(LOG_NOTICE, Action[ds_suffix, "block_reason"]": " _tgt_ds)
 }
 
-# Ensure source snapshots are avialable and load snapshot relationship data
+# Ensure source snapshots are available and load snapshot relationship data
 function validate_snapshots(		_i, _ds_suffix, _src_idx, _match, _src_exists, _src_latest) {
 	create_source_snapshot()
 	load_snapshot_deltas()
@@ -367,7 +367,7 @@ function compute_eligibility(           _i, _ds_suffix, _src_idx, _tgt_idx,
 				Action[_ds_suffix, "block_reason"] = "target has local writes"
 				continue
 			}
-			# TO-DO: Imrpove verbose output
+			# TO-DO: Improve verbose output
 			#Action[_ds_suffix, "block_reason"] = "up-to-date"
 			DSTree["up_to_date"]++
 			continue
@@ -375,7 +375,7 @@ function compute_eligibility(           _i, _ds_suffix, _src_idx, _tgt_idx,
 
 		# Target is ahead or has diverged otherwise
 		if (_match != _tgt_latest) {
-			Action[_ds_suffix, "block_reason"] = "target has divereged"
+			Action[_ds_suffix, "block_reason"] = "target has diverged"
 			Action[_ds_suffix, "can_rotate"] = 1
 			DSTree["rotatable"]++
 			continue
@@ -986,7 +986,7 @@ function run_rotate(		_src_ds_snap, _up_to_date, _src_origin_ds, _origin_arr, _n
 	load_snapshot_deltas()
 
 	if (DSTree["snapshots_diverged"])
-		report(LOG_NOTICE, "ensure preservation of diverged replica with: zelta backup " _src_origin_ds " " DSTree["target_origin"])
+		report(LOG_NOTICE, "ensure the preservation of diverged replica with: zelta backup " _src_origin_ds " " DSTree["target_origin"])
 	report(LOG_NOTICE, "to ensure target is up-to-date, run: zelta backup " Source["ID"] " " Target["ID"])
 }
 

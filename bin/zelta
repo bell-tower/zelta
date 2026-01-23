@@ -9,7 +9,7 @@ ZELTA_VERSION="Zelta 1.1.0"
 zelta_usage() {
 	exec >&2
 	if [ -n "$1" ] ; then
-		echo unrecognized command \'"$1"\'
+		echo "unrecognized command: '$1'"
 		case "$1" in
 		list)      echo did you mean "'zelta match'?" ;;
 		send)      echo did you mean "'zelta backup'?" ;;
