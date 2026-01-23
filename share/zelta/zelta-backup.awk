@@ -136,10 +136,11 @@ function check_snapshot_needed(endpoint, ds_suffix, prop_key, prop_val) {
 
 # Load zfs properties for an endpoint
 function load_properties(ep,		_ds, _cmd_arr, _cmd, _cmd_id, _ds_suffix, _idx, _seen, _log_level) {
-	_cmd_id                 = "zfs get"
-	_ds			= Opt[ep "_DS"]
-	_cmd_arr["endpoint"]	= ep
-	_cmd_arr["ds"]		= rq(Opt[ep"_REMOTE"],_ds)
+	_cmd_id               = "zfs get"
+	_ds                   = Opt[ep "_DS"]
+	_cmd_arr["endpoint"]  = ep
+	_cmd_arr["ds"]        = rq(Opt[ep"_REMOTE"],_ds)
+	_cmd_arr["props"]     = "all"
 	if (Opt["DEPTH"]) _cmd_arr["flags"] = "-d" (Opt["DEPTH"]-1)
 	_cmd = build_command("PROPS", _cmd_arr)
 	report(LOG_INFO, "checking properties for " Opt[ep"_ID"])

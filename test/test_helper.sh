@@ -57,7 +57,7 @@ src_exec() {
 	if [ -n "$SANDBOX_ZELTA_SRC_REMOTE" ]; then
 		ssh -n "$SANDBOX_ZELTA_SRC_REMOTE" sudo "$@"
 	else
-		sudo sh -c "$*"
+		eval sudo "$@"
 	fi
 }
 
@@ -66,7 +66,7 @@ tgt_exec() {
 	if [ -n "$SANDBOX_ZELTA_TGT_REMOTE" ]; then
 		ssh -n "$SANDBOX_ZELTA_TGT_REMOTE" sudo "$@"
 	else
-		sudo sh -c "$*"
+		eval sudo "$@"
 	fi
 }
 
@@ -188,7 +188,7 @@ make_pool() {
 	_pool_name="$1"
 	_exec_func="$2"
 	_pool_file=/tmp/$_pool_name.img
-	$_exec_func truncate -s 265m "$_pool_file"
+	$_exec_func truncate -s 64m "$_pool_file"
 	$_exec_func zpool create -f "$_pool_name" "$_pool_file"
 	return $?
 }
@@ -273,7 +273,7 @@ make_divergent_tree() {
         echo "$SANDBOX_ZELTA_SRC_DS" already exists >/dev/stderr
         return 1
     fi
-	
+
 	# If we get this far, it will be safe to attempt to clean it up
 	tmpfile_touch "divergent_tree_created"
 
@@ -291,7 +291,7 @@ make_divergent_tree() {
 	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub3" || return 1
 	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub3/space\ name" || return 1
 	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub4" || return 1
-	src_exec zfs create -sV 32M "$SANDBOX_ZELTA_SRC_DS/sub4/zvol" || return 1
+	src_exec zfs create -sV 8M "$SANDBOX_ZELTA_SRC_DS/sub4/zvol" || return 1
 	src_exec zfs create -o encryption=on -o keyformat=raw -o "keylocation=file:///tmp/zfs_test_enc_key_${SANDBOX_ZELTA_PROCNUM}" "$SANDBOX_ZELTA_SRC_DS/sub4/encrypted" || return 1
 	
 	# Replicate to target with @start snapshot
