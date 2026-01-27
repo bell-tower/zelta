@@ -15,14 +15,16 @@
 ## Setup temporary installation for testing
 #############################################
 
-export SANDBOX_ZELTA_TMP_DIR="/tmp/zelta$$"
-export SANDBOX_ZELTA_PROCNUM="$$"
-export ZELTA_BIN="$SANDBOX_ZELTA_TMP_DIR/bin"
-export ZELTA_SHARE="$SANDBOX_ZELTA_TMP_DIR/share"
-export ZELTA_ETC="$SANDBOX_ZELTA_TMP_DIR/etc"
-export ZELTA_DOC="$SANDBOX_ZELTA_TMP_DIR/man"
-export PATH="$ZELTA_BIN:$PATH"
-
+# bypass using $$ if we've manually set these vars
+if [ -z "$SANDBOX_ZELTA_TMP_DIR" ]; then
+    export SANDBOX_ZELTA_TMP_DIR="/tmp/zelta$$"
+    export SANDBOX_ZELTA_PROCNUM="$$"
+    export ZELTA_BIN="$SANDBOX_ZELTA_TMP_DIR/bin"
+    export ZELTA_SHARE="$SANDBOX_ZELTA_TMP_DIR/share"
+    export ZELTA_ETC="$SANDBOX_ZELTA_TMP_DIR/etc"
+    export ZELTA_DOC="$SANDBOX_ZELTA_TMP_DIR/man"
+    export PATH="$ZELTA_BIN:$PATH"
+fi
 
 # We could use the repo dirs, but better to test installation
 # use_repo_zelta() {
