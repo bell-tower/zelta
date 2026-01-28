@@ -49,7 +49,7 @@ function usage_prune(message) {
 	print "\t--keep-snap-num=N    Minimum number of snapshots to keep after match (default: 10)"        > STDERR
 	print "\t--keep-snap-days=N   Minimum age in days for snapshot deletion (default: 90)"              > STDERR
 	print "\t--no-ranges          Disable range compression (output individual snapshots)"              > STDERR
-	print "\t-x pattern           Exclude datasets matching pattern\n"                                  > STDERR
+	print "\t-X pattern           Exclude datasets matching pattern\n"                                  > STDERR
 	print "Only snapshots older than the common match point and replicated to TARGET are considered."   > STDERR
 	print "Output shows snapshot names (one per line) that are safe to prune.\n"                        > STDERR
 	print "For complete documentation:  zelta help prune"                                               > STDERR
