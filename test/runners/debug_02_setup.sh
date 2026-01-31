@@ -11,7 +11,7 @@
 test/runners/set_tmp_env.sh
 
 
-export SANDBOX_ZELTA_SRC_REMOTE=dever@fzfsdev
+#export SANDBOX_ZELTA_SRC_REMOTE=dever@fzfsdev
 export SANDBOX_ZELTA_TGT_REMOTE=dever@zfsdev
 export SANDBOX_ZELTA_SRC_POOL=apool
 export SANDBOX_ZELTA_TGT_POOL=bpool
