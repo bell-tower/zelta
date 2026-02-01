@@ -214,7 +214,7 @@ make_src_pool() {
 		#ssh -n "$SANDBOX_ZELTA_SRC_REMOTE"
 		src_exec "zfs allow -u \$USER snapshot,bookmark,send,hold $SANDBOX_ZELTA_SRC_POOL"
 	else
-		zfs allow -u "$USER" snapshot,bookmark,send,hold "$SANDBOX_ZELTA_SRC_POOL"
+		sudo zfs allow -u "$USER" snapshot,bookmark,send,hold "$SANDBOX_ZELTA_SRC_POOL"
 	fi
 	return $?
 }
@@ -228,7 +228,7 @@ make_tgt_pool() {
 		#ssh -n "$SANDBOX_ZELTA_TGT_REMOTE" "zfs allow -u \$USER mount,create,rename $SANDBOX_ZELTA_TGT_POOL"
 		tgt_exec "zfs allow -u \$USER receive,mount,create,canmount,rename $SANDBOX_ZELTA_TGT_POOL"
 	else
-		zfs allow -u "$USER" receive,mount,create,canmount,rename "$SANDBOX_ZELTA_TGT_POOL"
+		sudo zfs allow -u "$USER" receive,mount,create,canmount,rename "$SANDBOX_ZELTA_TGT_POOL"
 	fi
 	return $?
 }
