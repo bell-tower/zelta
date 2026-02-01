@@ -14,4 +14,8 @@ if [ -z "$USR_ORIG_PATH" ]; then
     export USR_ORIG_PATH=$PATH
 fi
 export PATH="$ZELTA_BIN:$PATH"
+export SHELLSPEC_TMPBASE=~/tmp/dbg_shellspecs
+mkdir -p $SHELLSPEC_TMPBASE
+echo "NOTE: SHELLSPEC_PROJECT_ROOT is not set"
+
 set +x
