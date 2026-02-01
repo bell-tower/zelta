@@ -1,0 +1,354 @@
+#!/bin/sh
+#
+# zprune - Destructive snapshot pruning coordinator for Zelta
+#
+# zprune validates that an explicit retention policy exists, then executes
+# destructive ZFS operations based on zelta prune output.
+#
+# WARNING: This tool performs DESTRUCTIVE operations. Use with caution.
+#
+# Design philosophy: zprune is a thin shell wrapper. All argument processing,
+# policy validation, and snapshot selection is delegated to `zelta prune`.
+
+ZPRUNE_VERSION="zprune 0.1.0"
+
+# Signal prefix from zelta prune --signal-policy
+POLICY_SIGNAL="# ZELTA_PRUNE_POLICY"
+
+# Usage and help
+zprune_usage() {
+	exec >&2
+	cat << 'EOF'
+usage: zprune [OPTIONS] source target
+
+Destructively prune snapshots from source that exist on target.
+
+SAFETY: Without explicit retention policy, zprune reports only (like 'zelta prune').
+        To actually destroy snapshots, use explicit flags or --default-policy.
+
+Options:
+  --default-policy     Use default retention policy (100 snaps, 90 days)
+  -f, --force          Do not prompt for confirmation (requires explicit policy)
+  -r, --recursive      Destroy recursively (pass -r to zfs destroy)
+  -n, --dry-run        Show what would be destroyed without doing it
+  -v, --verbose        Increase verbosity
+  -q, --quiet          Suppress non-error output
+
+Retention Options (passed to zelta prune):
+  --keep-snap-num=N    Minimum snapshots to keep after match
+  --keep-snap-days=N   Minimum age in days before deletion
+  --no-ranges          Output individual snapshots instead of ranges
+  -X, --exclude=PATTERN  Exclude datasets matching pattern
+  -d, --depth=LEVELS   Limit recursion depth
+
+Safety:
+  source MUST be local (no user@host: prefix)
+
+Examples:
+  # Review what would be pruned (report only, safe)
+  zprune tank/data backup:tank/backups/data
+
+  # Use default policy with confirmation
+  zprune --default-policy tank/data backup:tank/backups/data
+
+  # Use default policy, force without confirmation
+  zprune --default-policy -f tank/data backup:tank/backups/data
+
+  # Explicit retention policy
+  zprune --keep-snap-num=50 --keep-snap-days=30 tank/data backup:tank/backups/data
+
+For complete documentation: zelta help prune
+EOF
+	exit 1
+}
+
+zprune_version() {
+	echo "$ZPRUNE_VERSION"
+	exit 0
+}
+
+# Error output
+error() {
+	echo "zprune: $1" >&2
+}
+
+# Check if operand is local (no SSH)
+is_local_endpoint() {
+	case "$1" in
+		*@*:*) return 1 ;;
+		*) return 0 ;;
+	esac
+}
+
+# Parse arguments - just collect them for passing to zelta prune
+# Plus our own safety/interactivity flags
+parse_args() {
+	ZPRUNE_FORCE=""
+	ZPRUNE_RECURSIVE=""
+	ZPRUNE_DRYRUN=""
+	ZPRUNE_VERBOSE=""
+	ZPRUNE_QUIET=""
+	ZELTA_PRUNE_ARGS=""
+	ZPRUNE_SOURCE=""
+	ZPRUNE_TARGET=""
+
+	while [ $# -gt 0 ]; do
+		case "$1" in
+			-h|--help)
+				zprune_usage
+				;;
+			-V|--version)
+				zprune_version
+				;;
+			-f|--force)
+				ZPRUNE_FORCE="1"
+				shift
+				;;
+			-r|--recursive)
+				ZPRUNE_RECURSIVE="1"
+				shift
+				;;
+			-n|--dry-run)
+				ZPRUNE_DRYRUN="1"
+				shift
+				;;
+			-v|--verbose)
+				ZPRUNE_VERBOSE="1"
+				ZELTA_PRUNE_ARGS="$ZELTA_PRUNE_ARGS -v"
+				shift
+				;;
+			-q|--quiet)
+				ZPRUNE_QUIET="1"
+				ZELTA_PRUNE_ARGS="$ZELTA_PRUNE_ARGS -q"
+				shift
+				;;
+			--default-policy|--keep-snap-num*|--keep-snap-days*|--no-ranges|-X*|-d*|--exclude*|--depth*)
+				# Pass through to zelta prune
+				ZELTA_PRUNE_ARGS="$ZELTA_PRUNE_ARGS $1"
+				shift
+				;;
+			-X|--exclude|-d|--depth)
+				# Options that take separate arguments
+				ZELTA_PRUNE_ARGS="$ZELTA_PRUNE_ARGS $1 $2"
+				shift 2
+				;;
+			--)
+				shift
+				break
+				;;
+			-*)
+				error "unknown option: $1"
+				exit 1
+				;;
+			*)
+				break
+				;;
+		esac
+	done
+
+	# Remaining arguments are operands
+	if [ $# -lt 2 ]; then
+		error "source and target operands required"
+		zprune_usage
+	fi
+
+	ZPRUNE_SOURCE="$1"
+	ZPRUNE_TARGET="$2"
+
+	# Validate source is local
+	if ! is_local_endpoint "$ZPRUNE_SOURCE"; then
+		error "source must be local (SSH destruction is not permitted)"
+		error "source: $ZPRUNE_SOURCE"
+		exit 1
+	fi
+}
+
+# Run zelta prune with policy signaling enabled
+# Outputs: POLICY_STATUS followed by snapshots (if any)
+run_zelta_prune() {
+	# Trim leading space
+	ZELTA_PRUNE_ARGS="${ZELTA_PRUNE_ARGS# }"
+
+	# Call zelta prune with --signal-policy to get machine-readable policy status
+	# This flag tells zelta prune to output a header line with policy info
+	_zelta_cmd="zelta prune --signal-policy $ZELTA_PRUNE_ARGS '$ZPRUNE_SOURCE' '$ZPRUNE_TARGET'"
+
+	if [ -n "$ZPRUNE_VERBOSE" ] && [ -z "$ZPRUNE_QUIET" ]; then
+		echo "Running: $_zelta_cmd" >&2
+	fi
+
+	eval "$_zelta_cmd"
+}
+
+# Parse policy status from zelta prune output
+# First line should be: # ZELTA_PRUNE_POLICY<TAB>status<TAB>description
+# Returns: "explicit", "default", or "none"
+parse_policy_status() {
+	_policy_line="$1"
+	# Extract status field (second tab-delimited field)
+	_status=$(echo "$_policy_line" | cut -f2)
+	case "$_status" in
+		explicit)
+			echo "explicit"
+			;;
+		default)
+			echo "default"
+			;;
+		none)
+			echo "none"
+			;;
+		*)
+			echo "unknown"
+			;;
+	esac
+}
+
+# Extract human-readable description from policy line
+parse_policy_description() {
+	_policy_line="$1"
+	# Return everything after second tab (description field)
+	echo "$_policy_line" | cut -f3-
+}
+
+# Confirm destruction with user
+confirm_destruction() {
+	_count="$1"
+
+	if [ -z "$ZPRUNE_QUIET" ]; then
+		echo ""
+		echo "WARNING: This will PERMANENTLY DESTROY $_count snapshot range(s)."
+		echo ""
+		printf "Type 'destroy' to confirm: "
+	fi
+
+	read _confirm
+	if [ "$_confirm" != "destroy" ]; then
+		if [ -z "$ZPRUNE_QUIET" ]; then
+			echo "Aborted."
+		fi
+		exit 1
+	fi
+}
+
+# Destroy snapshots from list
+# Input: snapshot list (excluding policy header)
+destroy_snapshots() {
+	_snapshots="$1"
+	_destroy_opts=""
+
+	if [ -n "$ZPRUNE_RECURSIVE" ]; then
+		_destroy_opts="$_destroy_opts -r"
+	fi
+	if [ -n "$ZPRUNE_VERBOSE" ]; then
+		_destroy_opts="$_destroy_opts -v"
+	fi
+
+	_failed=0
+
+	IFS='
+'
+	for _snap in $_snapshots; do
+		# Skip empty lines and comments
+		[ -z "$_snap" ] && continue
+		case "$_snap" in
+			\#*) continue ;;
+		esac
+
+		_destroy_cmd="zfs destroy$_destroy_opts '$_snap'"
+
+		if [ -n "$ZPRUNE_DRYRUN" ]; then
+			echo "[DRY-RUN] $_destroy_cmd"
+		else
+			if [ -n "$ZPRUNE_VERBOSE" ] && [ -z "$ZPRUNE_QUIET" ]; then
+				echo "Destroying: $_snap"
+			fi
+			if ! eval "$_destroy_cmd"; then
+				error "failed to destroy: $_snap"
+				_failed=1
+			fi
+		fi
+	done
+	unset IFS
+
+	return $_failed
+}
+
+# Main
+main() {
+	parse_args "$@"
+
+	# Run zelta prune and capture output
+	_zelta_output=$(run_zelta_prune 2>&1)
+	_zelta_status=$?
+
+	if [ $_zelta_status -ne 0 ]; then
+		error "zelta prune failed with status $_zelta_status"
+		echo "$_zelta_output" >&2
+		exit $_zelta_status
+	fi
+
+	# Get first line (policy signal)
+	_policy_line=$(echo "$_zelta_output" | head -n 1)
+	_policy_status=$(parse_policy_status "$_policy_line")
+	_policy_desc=$(parse_policy_description "$_policy_line")
+
+	# Get remaining output (snapshots)
+	_snapshots=$(echo "$_zelta_output" | tail -n +2)
+
+	# Check if we have any snapshots
+	if [ -z "$_snapshots" ] || [ -z "$(echo "$_snapshots" | grep '@')" ]; then
+		if [ -z "$ZPRUNE_QUIET" ]; then
+			echo "No snapshots to prune."
+		fi
+		exit 0
+	fi
+
+	# Determine action based on policy status
+	case "$_policy_status" in
+		explicit|default)
+			# Explicit or default policy - proceed with destruction
+			if [ -n "$ZPRUNE_VERBOSE" ] && [ -z "$ZPRUNE_QUIET" ]; then
+				echo "Policy: $_policy_desc"
+			fi
+
+			# Count snapshots for confirmation prompt
+			_count=$(echo "$_snapshots" | grep -c '@' 2>/dev/null || echo "0")
+
+			# Confirm or dry-run
+			if [ -n "$ZPRUNE_DRYRUN" ]; then
+				if [ -z "$ZPRUNE_QUIET" ]; then
+					echo ""
+					echo "Dry-run mode with policy: $_policy_desc"
+					echo "Would destroy the following:"
+					echo ""
+				fi
+				destroy_snapshots "$_snapshots"
+			elif [ -z "$ZPRUNE_FORCE" ]; then
+				# Show snapshots and confirm
+				echo "$_snapshots"
+				confirm_destruction "$_count"
+				destroy_snapshots "$_snapshots"
+			else
+				# Force mode - destroy without confirmation
+				destroy_snapshots "$_snapshots"
+			fi
+			exit $?
+			;;
+		none|unknown)
+			# No explicit policy - report only mode
+			if [ -z "$ZPRUNE_QUIET" ]; then
+				echo "$_snapshots"
+				echo ""
+				echo "NOTICE: No explicit retention policy specified."
+				echo "        To destroy these snapshots, specify:"
+				echo "        - An explicit policy (--keep-snap-num, --keep-snap-days)"
+				echo "        - Use --default-policy to accept defaults (100 snaps, 90 days)"
+				echo ""
+				echo "Run with --default-policy to enable destruction."
+			fi
+			exit 0
+			;;
+	esac
+}
+
+main "$@"
