@@ -15,8 +15,9 @@
 ## Setup temporary installation for testing
 #############################################
 
-# bypass using $$ if we've manually set these vars
-if [ -z "$SANDBOX_ZELTA_TMP_DIR" ]; then
+
+
+setup_env() {
     export SANDBOX_ZELTA_TMP_DIR="/tmp/zelta$$"
     export SANDBOX_ZELTA_PROCNUM="$$"
     export ZELTA_BIN="$SANDBOX_ZELTA_TMP_DIR/bin"
@@ -24,7 +25,33 @@ if [ -z "$SANDBOX_ZELTA_TMP_DIR" ]; then
     export ZELTA_ETC="$SANDBOX_ZELTA_TMP_DIR/etc"
     export ZELTA_DOC="$SANDBOX_ZELTA_TMP_DIR/man"
     export PATH="$ZELTA_BIN:$PATH"
+}
+
+build_endpoints() {
+    ## Build endpoints
+    if [ -n "$SANDBOX_ZELTA_SRC_REMOTE" ]; then
+        SANDBOX_ZELTA_SRC_EP="${SANDBOX_ZELTA_SRC_REMOTE}:${SANDBOX_ZELTA_SRC_DS}"
+    else
+        SANDBOX_ZELTA_SRC_EP="$SANDBOX_ZELTA_SRC_DS"
+    fi
+
+    if [ -n "$SANDBOX_ZELTA_TGT_REMOTE" ]; then
+        SANDBOX_ZELTA_TGT_EP="${SANDBOX_ZELTA_TGT_REMOTE}:${SANDBOX_ZELTA_TGT_DS}"
+    else
+        SANDBOX_ZELTA_TGT_EP="$SANDBOX_ZELTA_TGT_DS"
+    fi
+
+    export SANDBOX_ZELTA_SRC_POOL SANDBOX_ZELTA_TGT_POOL
+    export SANDBOX_ZELTA_SRC_DS SANDBOX_ZELTA_TGT_DS
+    export SANDBOX_ZELTA_SRC_EP SANDBOX_ZELTA_TGT_EP
+}
+
+# bypass using $$ if we've manually set these vars
+if [ -z "$SANDBOX_ZELTA_TMP_DIR" ]; then
+   setup_env
 fi
+
+build_endpoints
 
 # We could use the repo dirs, but better to test installation
 # use_repo_zelta() {
@@ -33,22 +60,6 @@ fi
 # 	export ZELTA_SHARE="$REPO_ROOT/share/zelta"
 # }
 
-## Build endpoints
-if [ -n "$SANDBOX_ZELTA_SRC_REMOTE" ]; then
-    SANDBOX_ZELTA_SRC_EP="${SANDBOX_ZELTA_SRC_REMOTE}:${SANDBOX_ZELTA_SRC_DS}"
-else
-    SANDBOX_ZELTA_SRC_EP="$SANDBOX_ZELTA_SRC_DS"
-fi
-
-if [ -n "$SANDBOX_ZELTA_TGT_REMOTE" ]; then
-    SANDBOX_ZELTA_TGT_EP="${SANDBOX_ZELTA_TGT_REMOTE}:${SANDBOX_ZELTA_TGT_DS}"
-else
-    SANDBOX_ZELTA_TGT_EP="$SANDBOX_ZELTA_TGT_DS"
-fi
-
-export SANDBOX_ZELTA_SRC_POOL SANDBOX_ZELTA_TGT_POOL
-export SANDBOX_ZELTA_SRC_DS SANDBOX_ZELTA_TGT_DS
-export SANDBOX_ZELTA_SRC_EP SANDBOX_ZELTA_TGT_EP
 
 
 ## Command execution wrappers
@@ -266,13 +277,16 @@ clean_tgt_ds() {
 
 # Create divergent tree structure on source
 # Creates a dataset tree with snapshots that will diverge from target
-make_divergent_tree() {
+
+# Create divergent tree structure on source
+# Creates a dataset tree with snapshots that will diverge from target
+make_initial_tree() {
     if src_ds_exists; then
-        echo "$SANDBOX_ZELTA_TGT_DS" already exists >/dev/stderr
+        echo "$SANDBOX_ZELTA_SRC_DS" already exists >/dev/stderr
         return 1
     fi
     if tgt_ds_exists; then
-        echo "$SANDBOX_ZELTA_SRC_DS" already exists >/dev/stderr
+        echo "$SANDBOX_ZELTA_TGT_DS" already exists >/dev/stderr
         return 1
     fi
 
@@ -285,7 +299,7 @@ make_divergent_tree() {
 
 	# Create root dataset
 	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS" || return 1
-	
+
 	# Create child datasets
 	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub1" || return 1
 	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub2" || return 1
@@ -295,10 +309,16 @@ make_divergent_tree() {
 	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub4" || return 1
 	src_exec zfs create -sV 8M "$SANDBOX_ZELTA_SRC_DS/sub4/zvol" || return 1
 	src_exec zfs create -o encryption=on -o keyformat=raw -o "keylocation=file:///tmp/zfs_test_enc_key_${SANDBOX_ZELTA_PROCNUM}" "$SANDBOX_ZELTA_SRC_DS/sub4/encrypted" || return 1
-	
-	# Replicate to target with @start snapshot
-	zelta backup --snap-name @start "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP" || return 1
-	
+
+	return 0
+}
+
+# zelta backup moved to 022_setup_tree_spec as:
+#        Divergent ree tests -> setup -> can zelta backup initial tree
+# Replicate to target with @start snapshot
+# zelta backup --snap-name @start "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP" || return 1
+
+make_tree_divergence() {
 	# Generate divergence
 	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub1/child" || return 1
 	tgt_exec zfs create -u "$SANDBOX_ZELTA_TGT_DS/sub1/kid" || return 1
@@ -308,6 +328,7 @@ make_divergent_tree() {
 	src_exec zfs snapshot "$SANDBOX_ZELTA_SRC_DS/sub3@two" || return 1
 	src_exec zfs snapshot "$SANDBOX_ZELTA_SRC_DS/sub2@two" || return 1
 	tgt_exec zfs snapshot "$SANDBOX_ZELTA_TGT_DS/sub2@two" || return 1
-	
+
 	return 0
 }
+
