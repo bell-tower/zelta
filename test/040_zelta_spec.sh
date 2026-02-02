@@ -37,7 +37,7 @@ output_from_rotate() {
         "warning: insufficient snapshots; performing full backup for 3 datasets"|\
         "renaming '${SANDBOX_ZELTA_TGT_DS}' to '${SANDBOX_ZELTA_TGT_DS}_start'"|\
         "to ensure target is up-to-date, run: zelta backup $SANDBOX_ZELTA_SRC_EP $SANDBOX_ZELTA_TGT_EP"|\
-        "warning: missing `zfs allow` permissions: readonly,mountpoint"|\
+        "warning: missing \`zfs allow\` permissions: readonly,mountpoint"|\
         "no source: ${SANDBOX_ZELTA_TGT_DS}/sub1/kid"|\
         "* sent, 10 streams received in * seconds")
         ;;
