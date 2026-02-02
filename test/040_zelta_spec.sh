@@ -1,5 +1,5 @@
-#. spec/bin/divergent_test/divergent_test_env.sh
 
+# in use
 output_for_match_after_backup() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
@@ -28,17 +28,18 @@ output_for_match_after_backup() {
   return 0
 }
 
-output_check_after_rotate() {
+output_from_rotate() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
     normalized=$(echo "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     case "$normalized" in
-        "DS_SUFFIX MATCH SRC_LAST TGT_LAST INFO"|\
-        "source is written; snapshotting: @zelta_*"|\
-        "renaming '${SANDBOX_ZELTA_TGT_EP}' to '${SANDBOX_ZELTA_TGT_EP}_start'"|\
-        "to ensure target is up-to-date, run: zelta backup *"|\
-        "no source: ${SANDBOX_ZELTA_TGT_EP}/sub1/kid"|\
-        "* sent, 10 streams received *")
+        "source is written; snapshotting: @zelta_"*""|\
+        "warning: insufficient snapshots; performing full backup for 3 datasets"|\
+        "renaming '${SANDBOX_ZELTA_TGT_DS}' to '${SANDBOX_ZELTA_TGT_DS}_start'"|\
+        "to ensure target is up-to-date, run: zelta backup $SANDBOX_ZELTA_SRC_EP $SANDBOX_ZELTA_TGT_EP"|\
+        "warning: missing `zfs allow` permissions: readonly,mountpoint"|\
+        "no source: ${SANDBOX_ZELTA_TGT_DS}/sub1/kid"|\
+        "* sent, 10 streams received in * seconds")
         ;;
       *)
         printf "Unexpected line format: %s\n" "$line" >&2
@@ -48,6 +49,7 @@ output_check_after_rotate() {
   done
   return 0
 }
+
 
 output_for_match_after_rotate() {
   while IFS= read -r line; do
@@ -81,13 +83,6 @@ output_for_match_after_rotate() {
 # When call zelta rotate dever@zfsdev:apool/treetop dever@zfsdev:bpool/backups
 # There was output to stdout but not found expectation
 #
-#
-#
-#
-#
-#
-#
-
 # WIP notes
 #    zelta backup $_options_all $_options_backup "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP"
 
@@ -99,30 +94,15 @@ Describe 'Divergent tree zelta tests'
         The output should satisfy output_for_match_after_backup
     End
 
-
-
     It "zelta rotate $SANDBOX_ZELTA_SRC_EP $SANDBOX_ZELTA_TGT_EP"
-       #Skip if "wip test conversion" true
        When call zelta rotate "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP"
        The error should include "warning: insufficient snapshots; performing full backup for 3 datasets"
-       #The error should include "source is written; snapshotting*"
-       #The error should include "renaming '${SANDBOX_ZELTA_TGT_EP}' to '${SANDBOX_ZELTA_TGT_EP}_start'"
-       #The error should include "no source: ${SANDBOX_ZELTA_TGT_EP}/sub1/kid"
-       #The error should include "warning: insufficient snapshots"
-       #The error should include "10 streams received"
-       ##The output should satisfy match_rotate_output
-       ##The stderr should equal "warning: insufficient snapshots; performing full backup for 2 datasets"
-       #The output should satisfy output_check_after_rotate
-       The line 1 of stdout should include "source is written"
-       The output should include "snapshotting:"
+       The output should satisfy output_from_rotate
        The status should equal 0
     End
 
-
     It "match $SOURCE and $TARGET after divergent rotate"
-        #Skip if "wip test conversion" true
         When call zelta match "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP"
-        #The output should satisfy match_after_rotate_output
         The output should be present
         The output should satisfy output_for_match_after_rotate
         The status should equal 0

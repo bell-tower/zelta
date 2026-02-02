@@ -1,0 +1,7 @@
+source is written; snapshotting: @zelta_2026-02-02_19.29.14
+warning: insufficient snapshots; performing full backup for 3 datasets
+renaming 'bpool/backups' to 'bpool/backups_start'
+to ensure target is up-to-date, run: zelta backup dever@zfsdev:apool/treetop dever@zfsdev:bpool/backups
+warning: missing `zfs allow` permissions: readonly,mountpoint
+no source: bpool/backups/sub1/kid
+43K sent, 10 streams received in 0.19 seconds

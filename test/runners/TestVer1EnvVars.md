@@ -1,5 +1,7 @@
 # Env Vars from 1st version of shellspec
 
+Temporary documentation to help with migration to version 2, refactored tests
+
 ```shell
 export SRC_POOL="apool"
 export TGT_POOL="bpool"
