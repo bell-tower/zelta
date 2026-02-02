@@ -1,0 +1,13 @@
+DS_SUFFIX         MATCH   SRC_LAST  TGT_LAST  INFO
+[treetop]         @start  @start    @start    up-to-date
+/sub1             @start  @start    @start    up-to-date
+/sub1/child       -       -         -         syncable (full)
+/sub1/kid         -       -         -         no source (target only)
+/sub2             -       @two      @two      blocked sync: target diverged
+/sub2/orphan      @start  @start    @start    up-to-date
+/sub3             @start  @two      @start    syncable (incremental)
+/sub3/space name  @start  @start    @blocker  blocked sync: target diverged
+/sub4             @start  @start    @start    up-to-date
+/sub4/encrypted   @start  @start    @start    up-to-date
+/sub4/zvol        -       @start    -         blocked sync: no target snapshots
+5 up-to-date, 2 syncable, 4 blocked

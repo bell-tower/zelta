@@ -23,11 +23,14 @@ manual_backup() {
 
 
 run_specs_to_022() {
-    set +x
+    #set +x
     #SPEC_OPTIONS="--xtrace --shell bash"
     #SPEC_OPTIONS="--xtrace-only"
-    #shellspec $SPEC_OPTIONS --pattern "test/00*_spec.sh|test/01*_spec.sh|test/021*_spec.sh|test/99_cleanup_spec.sh"
-    shellspec $SPEC_OPTIONS --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/99_cleanup_spec.sh"
+    # NOTE: to get an execution trace on macOS need homebrew bash shell
+    SPEC_OPTIONS="--xtrace --shell /opt/homebrew/bin/bash"
+    #shellspec "$SPEC_OPTIONS" --pattern "test/00*_spec.sh|test/01*_spec.sh|test/021*_spec.sh|test/99_cleanup_spec.sh"
+    #shellspec "$SPEC_OPTIONS" --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/99_cleanup_spec.sh"
+    shellspec --xtrace --shell /opt/homebrew/bin/bash  --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|040_zelta_spec.sh"
 }
 
 manual_run() {
