@@ -1,7 +1,8 @@
 # Check remotes and create pools and datasets
 
 Describe 'Divergent tree tests'
-    Skip if 'SANDBOX_ZELTA_SRC_DS undefined' test -z "$SANDBOX_ZELTA_SRC_DS" -a -z "$SANDBOX_ZELTA_TGT_DS"
+    # TODO: Check with DB what env vars he wants to use for Skip if
+    Skip if 'SANDBOX_ZELTA_SRC_EP and SANDBOX_ZELTA_TGT_EP are undefined' test -z "$SANDBOX_ZELTA_SRC_EP" -a -z "$SANDBOX_ZELTA_TGT_EP"
 
     Describe 'setup'
         It 'creates initial tree on source'
