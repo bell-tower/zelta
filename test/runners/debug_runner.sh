@@ -22,7 +22,7 @@ manual_backup() {
 }
 
 
-run_specs_to_022() {
+run_specs_to_040() {
     #set +x
     #SPEC_OPTIONS="--xtrace --shell bash"
     #SPEC_OPTIONS="--xtrace-only"
@@ -44,7 +44,7 @@ manual_run() {
 
 spec_run() {
     setup_env ""
-    run_specs_to_022
+    run_specs_to_040
 }
 
 spec_run
