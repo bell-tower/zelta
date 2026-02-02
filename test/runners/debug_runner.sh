@@ -2,7 +2,6 @@
 
 . ./test/runners/helpers.sh
 
-
 manual_make() {
     #run_it nuke_tgt_pool
     #run_id nuke_src_pool
@@ -11,17 +10,42 @@ manual_make() {
     run_it make_divergent_tree
 }
 
-run_specs_to_021() {
+
+manual_backup() {
+    clean_ds_and_pools
+    run_it make_tgt_pool
+    run_it make_src_pool
+    run_it make_initial_tree
+    #run_it make_target_dataset
+    zelta backup --snap-name @start $SANDBOX_ZELTA_SRC_EP $SANDBOX_ZELTA_TGT_EP
+    #run_it "zelta backup"
+}
+
+
+run_specs_to_022() {
     set +x
-    SPEC_OPTIONS="--xtrace --shell bash"
+    #SPEC_OPTIONS="--xtrace --shell bash"
+    #SPEC_OPTIONS="--xtrace-only"
     #shellspec $SPEC_OPTIONS --pattern "test/00*_spec.sh|test/01*_spec.sh|test/021*_spec.sh|test/99_cleanup_spec.sh"
     shellspec $SPEC_OPTIONS --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/99_cleanup_spec.sh"
 }
 
-setup_env ""
-#setup_env "1"
-run_specs_to_021
-#manual_make
+manual_run() {
+    #setup_env "1"
+    #echo $PATH
+    #manual_make
+    #echo "SANDBOX_ZELTA_SRC_EP: {$SANDBOX_ZELTA_SRC_EP}"
+    #echo "SANDBOX_ZELTA_TGT_EP: {$SANDBOX_ZELTA_TGT_EP}"
+    manual_backup
+}
+
+spec_run() {
+    setup_env ""
+    run_specs_to_022
+}
+
+spec_run
+
 
 # current spec list
 #shellspec test/00_install_spec.sh:@1-1
