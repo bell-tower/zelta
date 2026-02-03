@@ -31,23 +31,25 @@
 ### Shellspec matcher example 
 - ### Generating a matcher function or shellspec from zelta match output
 ```shell
-$ ./matcher_func_generator.sh test_data/zelta_match_output.txt match_after_rotate_output
-match_after_rotate_output() {
+rlogwood@lumacp util % ./generate_matcher.sh \
+> "zelta backup $SANDBOX_ZELTA_SRC_EP $SANDBOX_ZELTA_TGT_EP" \
+> output_backup_after_rotate_v2
+zelta_cmd={zelta backup dever@zfsdev:apool/treetop dever@zfsdev:bpool/backups}
+func_name=output_backup_after_rotate_v2
+perform substitutions for env vars:SANDBOX_ZELTA_TGT_DS:SANDBOX_ZELTA_SRC_DS
+Generating matcher function...
+ ✅ Success, matcher generated to file ./tmp/output_backup_after_rotate_v2/output_backup_after_rotate_v2.sh
+```
+
+```shell
+output_backup_after_rotate_v2() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
     normalized=$(echo "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     case "$normalized" in
-        "DS_SUFFIX MATCH SRC_LAST TGT_LAST INFO"|\
-        "[treetop] @zelta_"*" @zelta_"*" @zelta_"*" up-to-date"|\
-        "/sub1 @zelta_"*" @zelta_"*" @zelta_"*" up-to-date"|\
-        "/sub1/child @zelta_"*" @zelta_"*" @zelta_"*" up-to-date"|\
-        "/sub2 @two @zelta_"*" @two syncable (incremental)"|\
-        "/sub2/orphan @two @zelta_"*" @two syncable (incremental)"|\
-        "/sub3 @two @zelta_"*" @two syncable (incremental)"|\
-        "/sub3/space name @two @zelta_"*" @two syncable (incremental)"|\
-        "/vol1 @go @zelta_"*" @go syncable (incremental)"|\
-        "3 up-to-date, 5 syncable"|\
-        "8 total datasets compared")
+        "syncing 10 datasets"|\
+        "10 datasets up-to-date"|\
+        "* sent, * streams received in * seconds")
         ;;
       *)
         printf "Unexpected line format: %s\n" "$line" >&2
@@ -61,10 +63,10 @@ match_after_rotate_output() {
 
 - ### Shellspec example using the generated matcher
 ```shell
-Describe 'test zelta match output example'
-    It "match $SOURCE and $TARGET"
-       When call zelta match $SOURCE $TARGET
-       The output should satisfy match_after_rotate_output
+Describe 'test example'
+    It "backup again after rotate"
+       When call zelta backup "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP"    
+       The output should satisfy output_backup_after_rotate_v2
        The status should equal 0
     End
 Enc

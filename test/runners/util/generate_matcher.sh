@@ -19,7 +19,7 @@ fi
 
 echo "zelta_cmd={$zelta_cmd}"
 echo "func_name=${func_name}"
-echo "perform substitutes for env vars:${env_var_names}"
+echo "perform substitutions for env vars:${env_var_names}"
 
 OUT_DIR=./tmp/${func_name}
 OUT_FL=${OUT_DIR}/stdout_${func_name}.out
