@@ -15,6 +15,9 @@ alias zdbgenv=". $ZELTA_DBG/helpers.sh && setup_env 1"
 alias zsetup=". $ZELTA_DBG/test_env.sh"
 alias zclean="$ZELTA_DBG/manual_cleanup.sh"
 alias zdbg="$ZELTA_DBG/debug_runner.sh"
+
+# setup env vars for your test environment
+alias ztenv=". $ZELTA_DBG/test_env.sh"
 ```
 
 Directory of files in `test/runners/`:

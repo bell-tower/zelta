@@ -1,5 +1,30 @@
 #!/usr/bin/awk -f
 
+BEGIN {
+    # Split just the environment variable names
+    split(env_names, env_names_arr, ":")
+    env_count = length(env_names_arr)
+
+    # Read values from environment and sort by length (descending)
+    for (i = 1; i <= env_count; i++) {
+        env_values_arr[i] = ENVIRON[env_names_arr[i]]
+    }
+
+    # Sort by value length (descending) - bubble sort
+    for (i = 1; i <= env_count; i++) {
+        for (j = i + 1; j <= env_count; j++) {
+            if (length(env_values_arr[i]) < length(env_values_arr[j])) {
+                tmp_val = env_values_arr[i]
+                env_values_arr[i] = env_values_arr[j]
+                env_values_arr[j] = tmp_val
+
+                tmp_name = env_names_arr[i]
+                env_names_arr[i] = env_names_arr[j]
+                env_names_arr[j] = tmp_name
+            }
+        }
+    }
+}
 # ignore blank lines
 /^$/ { next }
 
@@ -10,6 +35,12 @@
 {
     gsub(/[[:space:]]+/, " ", $0)
     gsub(/@zelta_[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}\.[0-9]{2}\.[0-9]{2}/, "@zelta_\"*\"",$0)
+    gsub(/`/, "\\`", $0)
+
+    for (i = 1; i <= env_count; i++) {
+        gsub(env_values_arr[i], "$" env_names_arr[i], $0)
+    }
+
     lines[count++] = $0
 }
 

@@ -1,8 +1,32 @@
 ## Utilities
 
-`match_function_generator.sh` - create case statement for shellspec 
+## Generating a shellspec matcher function 
+- in shellspec test use: 
+   - `The output should satisfy (generated matcher function name)`
 
-## Examples
+### Steps
+- put the zfs dataset in the desired state
+
+#### Generate matcher function automatically
+- run the `./generate_matcher.sh` script with the desired zelta command and desired matcher function name as arguments
+- the output will be written to a directory with the matcher function name 
+- example invocation
+    ```shell
+    ./generate_matcher.sh \ 
+    "zelta match dever@zfsdev:apool/treetop dever@zfsdev:bpool/backups" \
+    backup_after_rotate \
+    output_for_backup_after_rotate
+    ```
+
+#### Generate matcher function manual steps
+- run the zelta command whose output you want to capture and save it to a file
+- run `./match_function_generator.sh`
+   - 1st arg the output file from the zelta command 
+   - 2nd arg is the name of the function to generate
+   - copy the output into your shellspec test
+
+
+## Using the generated matcher
 
 ### Shellspec matcher example 
 - ### Generating a matcher function or shellspec from zelta match output

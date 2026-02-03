@@ -1,5 +1,27 @@
+# divergent tree zelta backup output after rotate
+output_from_backup_after_rotate() {
+  while IFS= read -r line; do
+    # normalize whitespace, remove leading/trailing spaces
+    normalized=$(echo "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    case "$normalized" in
+        "source is written; snapshotting: @zelta_"*""|\
+        "syncing 11 datasets"|\
+        "no source: $SANDBOX_ZELTA_TGT_DS/sub1/kid"|\
+        "no common snapshot (diverged): $SANDBOX_ZELTA_TGT_DS/sub2"|\
+        "target has diverged: $SANDBOX_ZELTA_TGT_DS/sub3/space name"|\
+        "no snapshot; target diverged: $SANDBOX_ZELTA_TGT_DS/sub4/zvol"|\
+        "*, 8 streams received in * seconds")
+        ;;
+      *)
+        printf "Unexpected line format: %s\n" "$line" >&2
+        return 1
+        ;;
+    esac
+  done
+  return 0
+}
 
-# in use
+# divergent tree zelta match output after backup
 output_for_match_after_backup() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
@@ -28,6 +50,7 @@ output_for_match_after_backup() {
   return 0
 }
 
+# divergent tree zelta rotate output
 output_from_rotate() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
@@ -50,7 +73,7 @@ output_from_rotate() {
   return 0
 }
 
-
+# divergent tree zelta match output after rotate
 output_for_match_after_rotate() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
@@ -79,36 +102,37 @@ output_for_match_after_rotate() {
   return 0
 }
 
-# (in specfile test/040_zelta_spec.sh, line 44-56, WARNING)
-# When call zelta rotate dever@zfsdev:apool/treetop dever@zfsdev:bpool/backups
-# There was output to stdout but not found expectation
-#
-# WIP notes
-#    zelta backup $_options_all $_options_backup "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP"
-
 Describe 'Divergent tree zelta tests'
-    Skip if 'SANDBOX_ZELTA_SRC_EP and SANDBOX_ZELTA_TGT_EP are undefined' test -z "$SANDBOX_ZELTA_SRC_EP" -a -z "$SANDBOX_ZELTA_TGT_EP"
+    Skip if 'SANDBOX_ZELTA_SRC_DS and SANDBOX_ZELTA_TGT_DS are undefined' test -z "$SANDBOX_ZELTA_SRC_DS" -a -z "$SANDBOX_ZELTA_TGT_DS"
 
-    It "zelta match $SANDBOX_ZELTA_SRC_EP $SANDBOX_ZELTA_TGT_EP"
+    It "zelta match $SANDBOX_ZELTA_SRC_EP $SANDBOX_ZELTA_TGT_EP - show divergence"
         When call zelta match "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP"
         The output should satisfy output_for_match_after_backup
     End
 
-    It "zelta rotate $SANDBOX_ZELTA_SRC_EP $SANDBOX_ZELTA_TGT_EP"
+    It "zelta rotate $SANDBOX_ZELTA_SRC_EP $SANDBOX_ZELTA_TGT_EP - after divergence"
        When call zelta rotate "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP"
        The error should include "warning: insufficient snapshots; performing full backup for 3 datasets"
        The output should satisfy output_from_rotate
        The status should equal 0
     End
 
-    It "match $SOURCE and $TARGET after divergent rotate"
+    It "zelta match $SANDBOX_ZELTA_SRC_EP $SANDBOX_ZELTA_TGT_EP after - rotate"
         When call zelta match "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP"
         The output should be present
         The output should satisfy output_for_match_after_rotate
         The status should equal 0
     End
-End
 
+    It "zelta backup $SANDBOX_ZELTA_SRC_EP $SANDBOX_ZELTA_TGT_EP - after rotate"
+       Skip if "wip test conversion" true
+       When call zelta backup "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP"
+       # TODO: fix matcher
+       The output should satisfy output_from_backup_after_rotate
+       The error should include "warning: missing \`zfs allow\` permissions: mountpoint"
+       The status should equal 0
+    End
+End
 
 Describe 'ignored tests'
     Skip if "wip test conversion" true
