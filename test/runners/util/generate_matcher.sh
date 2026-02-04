@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # Check for required arguments
-if [ $# -lt 2 ] || [ $# -gt 3 ]; then
-    printf "Usage: %s <zelta command> <matcher_function_name> <env_var_name1:env_var_name2:...>\n" "$0" >&2
+if [ $# -lt 3 ] || [ $# -gt 4 ]; then
+    printf "Usage: %s <zelta command> <matcher_function_name> <output_dir> <env_var_name1:env_var_name2:...>\n" "$0" >&2
     printf "\t-> * put your zfs datasets in the desired state before running\n"
     printf "\t-> * to capture the zelta output that would be captured by a test\n"
     exit 1
@@ -10,10 +10,12 @@ fi
 
 zelta_cmd=$1
 func_name=$2
+output_dir=$3
 
-if [ $# -eq 3 ]; then
-    env_var_names=$3
+if [ $# -eq 4 ]; then
+    env_var_names=$4
 else
+    # default to
     env_var_names="SANDBOX_ZELTA_TGT_DS:SANDBOX_ZELTA_SRC_DS"
 fi
 
@@ -21,9 +23,9 @@ echo "zelta_cmd={$zelta_cmd}"
 echo "func_name=${func_name}"
 echo "perform substitutions for env vars:${env_var_names}"
 
-OUT_DIR=./tmp/${func_name}
-OUT_FL=${OUT_DIR}/stdout_${func_name}.out
-ERR_FL=${OUT_DIR}/stderr_${func_name}.out
+OUT_DIR=${output_dir}/${func_name}
+OUT_FL=${OUT_DIR}/${func_name}_stdout.out
+ERR_FL=${OUT_DIR}/${func_name}_stderr.out
 MATCHER_FL=${OUT_DIR}/${func_name}.sh
 
 mkdir -p "$OUT_DIR"

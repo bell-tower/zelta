@@ -1,0 +1,31 @@
+type: object
+required:
+  - shellspec_name
+  - describe_desc
+  - output_dir
+  - test_list
+properties:
+  shellspec_name:
+    type: string
+    description: Name for the generated ShellSpec file
+  describe_desc:
+    type: string
+    description: Description for the Describe block
+  output_dir:
+    type: string
+    description: Directory for generated test files
+  test_list:
+    type: array
+    items:
+      type: object
+      required:
+        - test_name
+        - it_desc
+        - zelta_command
+      properties:
+        test_name:
+          type: string
+        it_desc:
+          type: string
+        zelta_command:
+          type: string

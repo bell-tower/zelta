@@ -29,9 +29,9 @@
 ## Using the generated matcher
 
 ### Shellspec matcher example 
-- ### Generating a matcher function or shellspec from zelta match output
+- ### Generating a matcher function for shellspec from zelta match output
 ```shell
-rlogwood@lumacp util % ./generate_matcher.sh \
+util % ./generate_matcher.sh \
 > "zelta backup $SANDBOX_ZELTA_SRC_EP $SANDBOX_ZELTA_TGT_EP" \
 > output_backup_after_rotate_v2
 zelta_cmd={zelta backup dever@zfsdev:apool/treetop dever@zfsdev:bpool/backups}
