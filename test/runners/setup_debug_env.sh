@@ -7,5 +7,5 @@ if . test/runners/set_reuse_tmp_env.sh; then
    . test/runners/test_env.sh     # set dataset, pools and remote env vars
    . test/test_helper.sh          # make all the helper functions available
 else
-    return 0
+    return 1
 fi

@@ -8,8 +8,16 @@ debug_env_script = File.join(repo_root, 'test/runners/setup_debug_env.sh')
 
 # Source shell environment setup
 if File.exist?(debug_env_script)
+  output = `bash -c 'cd #{repo_root} && source #{debug_env_script} && env' 2>&1`
+  
+  if $?.exitstatus != 0
+    $stderr.puts "Failed to source #{debug_env_script}:"
+    $stderr.puts output
+    exit $?.exitstatus
+  end
+  
   ENV.update(
-    `bash -c 'cd #{repo_root} && source #{debug_env_script} && env'`
+    output
       .split("\n")
       .map { |line| line.split('=', 2) }
       .select { |pair| pair.size == 2 }

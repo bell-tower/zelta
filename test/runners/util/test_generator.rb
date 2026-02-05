@@ -15,13 +15,12 @@ class TestGenerator
   attr_reader :config, :output_dir, :shellspec_name, :describe_desc, :test_list,
               :matcher_files, :wip_file_path, :final_file_path
 
-
-
   def initialize(yaml_file_path)
     raise "YAML file not found: #{yaml_file_path}" unless File.exist?(yaml_file_path)
 
     @config = YAML.load_file(yaml_file_path)
     validate_config!
+
     @shellspec_name = @config['shellspec_name']
     @describe_desc = @config['describe_desc']
     @output_dir = @config['output_dir']
@@ -42,6 +41,60 @@ class TestGenerator
   end
 
   private
+
+  # Performs variable substitution in a string using the values from an object's instance variables.
+  # The substitution is performed using the %{variable_name} syntax.
+  #
+  # Usage examples
+  # substitute_placeholders("run %{zelta_command}", my_obj)
+  # substitute_placeholders("run %{zelta_command}", my_obj, exclusions: [:internal_state])
+  # substitute_placeholders("run %{zelta_command}", my_obj, inclusions: [:zelta_command, :runner])
+  def substitute_placeholders(string, source, inclusions: nil, exclusions: nil)
+    raise ArgumentError, "Cannot specify both inclusions and exclusions" if inclusions && exclusions
+
+    vars = if source.is_a?(Hash)
+             filter_hash(source, inclusions, exclusions)
+           else
+             extract_vars_from_object(source, inclusions, exclusions)
+           end
+
+    print "Substituting variables in string: #{string}\n"
+    print "Using variables: #{vars.inspect}\n"
+    string.gsub(/%\{(\w+)\}/) { vars[$1] || vars[$1.to_sym] }
+  end
+
+  private
+
+  def filter_hash(hash, inclusions, exclusions)
+    return hash if inclusions.nil? && exclusions.nil?
+
+    hash.select do |key, _|
+      key_str = key.to_s
+      puts "Filtering key: #{key_str}"
+      puts "inclusions.include?(key) || inclusions.include?(key_str) #{inclusions.include?(key) || inclusions.include?(key_str) || inclusions.include?(key_str.to_sym)}"
+      if inclusions
+        inclusions.include?(key) || inclusions.include?(key_str) || inclusions.include?(key_str.to_sym)
+      elsif exclusions
+        !(exclusions.include?(key) || exclusions.include?(key_str) || exclusions.include?(key_str.to_sym))
+      else
+        true
+      end
+    end
+  end
+
+  def extract_vars_from_object(obj, inclusions, exclusions)
+    obj.instance_variables.each_with_object({}) do |var, hash|
+      var_name = var.to_s.delete('@')
+
+      if inclusions
+        next unless inclusions.include?(var_name) || inclusions.include?(var_name.to_sym)
+      elsif exclusions
+        next if exclusions.include?(var_name) || exclusions.include?(var_name.to_sym)
+      end
+
+      hash[var_name] = obj.instance_variable_get(var)
+    end
+  end
 
   def matcher_func_name(test_name)
     "output_for_#{test_name}"
@@ -67,7 +120,9 @@ class TestGenerator
   def process_tests
     @test_list.each do |test|
       test_name = test['test_name']
-      it_desc = test['it_desc']
+      # allow var substitution in test description
+      it_desc = substitute_placeholders(test['it_desc'], test, inclusions: [:zelta_command])
+
       zelta_command = test['zelta_command']
 
       puts "Processing test: #{test_name}"
