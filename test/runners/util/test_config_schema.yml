@@ -21,7 +21,7 @@ properties:
       required:
         - test_name
         - it_desc
-        - zelta_command
+        - when_command
       properties:
         test_name:
           type: string

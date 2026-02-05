@@ -6,6 +6,7 @@ require 'json-schema'
 require 'yaml'
 require 'fileutils'
 require 'time'
+require_relative 'lib/placeholders'
 
 # TestGenerator - Generates ShellSpec test files from YAML configuration
 class TestGenerator
@@ -42,59 +43,6 @@ class TestGenerator
 
   private
 
-  # Performs variable substitution in a string using the values from an object's instance variables.
-  # The substitution is performed using the %{variable_name} syntax.
-  #
-  # Usage examples
-  # substitute_placeholders("run %{zelta_command}", my_obj)
-  # substitute_placeholders("run %{zelta_command}", my_obj, exclusions: [:internal_state])
-  # substitute_placeholders("run %{zelta_command}", my_obj, inclusions: [:zelta_command, :runner])
-  def substitute_placeholders(string, source, inclusions: nil, exclusions: nil)
-    raise ArgumentError, "Cannot specify both inclusions and exclusions" if inclusions && exclusions
-
-    vars = if source.is_a?(Hash)
-             filter_hash(source, inclusions, exclusions)
-           else
-             extract_vars_from_object(source, inclusions, exclusions)
-           end
-
-    print "Substituting variables in string: #{string}\n"
-    print "Using variables: #{vars.inspect}\n"
-    string.gsub(/%\{(\w+)\}/) { vars[$1] || vars[$1.to_sym] }
-  end
-
-  private
-
-  def filter_hash(hash, inclusions, exclusions)
-    return hash if inclusions.nil? && exclusions.nil?
-
-    hash.select do |key, _|
-      key_str = key.to_s
-      puts "Filtering key: #{key_str}"
-      puts "inclusions.include?(key) || inclusions.include?(key_str) #{inclusions.include?(key) || inclusions.include?(key_str) || inclusions.include?(key_str.to_sym)}"
-      if inclusions
-        inclusions.include?(key) || inclusions.include?(key_str) || inclusions.include?(key_str.to_sym)
-      elsif exclusions
-        !(exclusions.include?(key) || exclusions.include?(key_str) || exclusions.include?(key_str.to_sym))
-      else
-        true
-      end
-    end
-  end
-
-  def extract_vars_from_object(obj, inclusions, exclusions)
-    obj.instance_variables.each_with_object({}) do |var, hash|
-      var_name = var.to_s.delete('@')
-
-      if inclusions
-        next unless inclusions.include?(var_name) || inclusions.include?(var_name.to_sym)
-      elsif exclusions
-        next if exclusions.include?(var_name) || exclusions.include?(var_name.to_sym)
-      end
-
-      hash[var_name] = obj.instance_variable_get(var)
-    end
-  end
 
   def matcher_func_name(test_name)
     "output_for_#{test_name}"
@@ -121,17 +69,17 @@ class TestGenerator
     @test_list.each do |test|
       test_name = test['test_name']
       # allow var substitution in test description
-      it_desc = substitute_placeholders(test['it_desc'], test, inclusions: [:zelta_command])
+      it_desc = Placeholders.substitute(test['it_desc'], test, inclusions: [:when_command])
 
-      zelta_command = test['zelta_command']
+      when_command = test['when_command']
 
       puts "Processing test: #{test_name}"
 
       # Generate matcher files
-      generate_matcher_files(test_name, zelta_command)
+      generate_matcher_files(test_name, when_command)
 
       # Append It clause to WIP file
-      append_it_clause(test_name, it_desc, zelta_command)
+      append_it_clause(test_name, it_desc, when_command)
     end
 
     # Close Describe block
@@ -140,7 +88,7 @@ class TestGenerator
     end
   end
 
-  def generate_matcher_files(test_name, zelta_command)
+  def generate_matcher_files(test_name, when_command)
     matcher_script = GENERATE_MATCHER_SH_SCRIPT
     matcher_function_name = matcher_func_name(test_name)
 
@@ -150,7 +98,7 @@ class TestGenerator
     end
 
     # Execute the matcher generator script
-    cmd = "#{matcher_script} \"#{zelta_command}\" #{matcher_function_name} #{@output_dir}"
+    cmd = "#{matcher_script} \"#{when_command}\" #{matcher_function_name} #{@output_dir}"
     output = `#{cmd} 2>&1`
     exit_status = $CHILD_STATUS.exitstatus
 
@@ -170,7 +118,7 @@ class TestGenerator
     @matcher_files << matcher_file if File.exist?(matcher_file)
   end
 
-  def append_it_clause(test_name, it_desc, zelta_command)
+  def append_it_clause(test_name, it_desc, when_command)
     File.open(@wip_file_path, 'a') do |file|
       file.puts "  It '#{it_desc}'"
 
@@ -184,7 +132,7 @@ class TestGenerator
         status_line = '    The status should equal 0'
       end
 
-      file.puts "    When call #{zelta_command}"
+      file.puts "    When call #{when_command}"
       file.puts "    The output should satisfy #{matcher_func_name(test_name)}"
 
       file.puts '    The error should equal "$expected_error"' if File.exist?(stderr_file) && !File.zero?(stderr_file)
@@ -265,10 +213,10 @@ def run_generator
       test_list:
         - test_name: test_version
           it_desc: should display version information
-          zelta_command: zelta --version
+          when_command: zelta --version
         - test_name: test_help
           it_desc: should display help message
-          zelta_command: zelta --help
+          when_command: zelta --help
     YAML
     return 1
   end
