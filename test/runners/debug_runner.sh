@@ -3,8 +3,7 @@
 . ./test/runners/helpers.sh
 
 manual_make() {
-    #run_it nuke_tgt_pool
-    #run_id nuke_src_pool
+    clean_ds_and_pools
     run_it make_tgt_pool
     run_it make_src_pool
     run_it make_divergent_tree
@@ -23,14 +22,11 @@ manual_backup() {
 
 
 run_specs_to_040() {
-    #set +x
-    #SPEC_OPTIONS="--xtrace --shell bash"
-    #SPEC_OPTIONS="--xtrace-only"
     # NOTE: to get an execution trace on macOS need homebrew bash shell
-    SPEC_OPTIONS="--xtrace --shell /opt/homebrew/bin/bash"
+    #SPEC_OPTIONS='--xtrace --shell /opt/homebrew/bin/bash'
     #shellspec "$SPEC_OPTIONS" --pattern "test/00*_spec.sh|test/01*_spec.sh|test/021*_spec.sh|test/99_cleanup_spec.sh"
     #shellspec "$SPEC_OPTIONS" --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/99_cleanup_spec.sh"
-    shellspec --xtrace --shell /opt/homebrew/bin/bash  --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|040_zelta_spec.sh"
+    shellspec --xtrace --shell /opt/homebrew/bin/bash  --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/040_zelta_spec.sh"
 }
 
 manual_run() {
@@ -43,8 +39,11 @@ manual_run() {
 }
 
 spec_run() {
-    setup_env ""
-    run_specs_to_040
+    # NOTE: setup_env 1  - will create a debug environment
+    #       setup_env "" - creates a standard environment
+    if setup_env ""; then
+      run_specs_to_040
+    fi
 }
 
 spec_run
