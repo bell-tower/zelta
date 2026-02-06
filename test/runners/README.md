@@ -8,6 +8,7 @@
 > a full test. These aliases help simplify that iterative 
 > process.
 ```shell
+
 # set to your repo location for zelta
 ZELTA_DEV=~/src/repos/bt/zelta      # local repo location 
 
@@ -26,7 +27,7 @@ BASH_SH=/opt/homebrew/bin/bash
 alias zspect='zcd && shellspec --xtrace --shell $BASH_SH'
 
 # force next evaluation of test/test_helpers.sh to initialize env fully
-alias zrenv="zcd && . $ZELTA_DBG/reset_env.sh" 
+alias zrenv="zcd && zclean && . $ZELTA_DBG/reset_env.sh" 
 
 # make debug environment
 alias zdbgenv="zcd && . $ZELTA_DBG/helpers.sh && setup_env 1"
@@ -38,7 +39,7 @@ alias zsetup="zcd && . $ZELTA_DBG/test_env.sh"
 alias zclean="zcd && $ZELTA_DBG/manual_cleanup.sh"
 
 # perform a debug run, customize debug_runner.sh as needed
-alias zdbg="zcd && $ZELTA_DBG/debug_runner.sh"
+alias zrdbg="zcd && zdbgenv && zclean && $ZELTA_DBG/debug_runner.sh"
 
 # setup env vars for your test environment
 alias ztenv="zcd && . $ZELTA_DBG/test_env.sh"

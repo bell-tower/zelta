@@ -2,7 +2,16 @@
 
 ## Generate a shellspec test
 
+- TODO: create better docs for auto test generation
+  - this config [test_defs/divergent_tree_zelta_test.yml](test_defs/divergent_tree_zelta_test.yml)
+  - produced this test [../../040_zelta_tests_spec.sh](../../040_zelta_tests_spec.sh)
 
+#### steps are:
+- put tree into desired state (use helper aliases, zdbg)
+- run generator with dbg env `test/runners/util/run_test_gen_dbg_env.rb (test config.yml)`
+- put tree back into desired state
+- test generated test
+- if it works, put it into the test directory and test it normally
 
 
 
