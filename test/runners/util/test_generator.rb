@@ -110,7 +110,7 @@ class TestGenerator
 
   def append_it_clause(test_name, it_desc, when_command)
     File.open(@wip_file_path, 'a') do |file|
-      file.puts "  It '#{it_desc}'"
+      file.puts "  It \"#{it_desc.gsub('"', '\\"')}\""
 
       # Check for stderr output
       stderr_file = File.join(@output_dir, "#{test_name}_stderr.out")
