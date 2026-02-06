@@ -7,6 +7,7 @@ require 'yaml'
 require 'fileutils'
 require 'time'
 require_relative 'lib/placeholders'
+require_relative 'lib/sys_exec'
 
 # TestGenerator - Generates ShellSpec test files from YAML configuration
 class TestGenerator
@@ -97,18 +98,31 @@ class TestGenerator
       return
     end
 
+
+
+    #{ stdout: stdout, stderr: stderr, exit_status: status.exitstatus }
     # Execute the matcher generator script
+    # cmd = "#{matcher_script} \"#{when_command}\" #{matcher_function_name} #{@output_dir}"
+    # output = `#{cmd} 2>&1`
+    # exit_status = $CHILD_STATUS.exitstatus
+    #
+    # puts "Matcher generation output for #{test_name}:"
+    # puts output
+    # puts "Exit status: #{exit_status}"
+    #
+    # if exit_status != 0
+    #   puts "Warning: Matcher generation failed for #{test_name}"
+    #   return
+    # end
+
     cmd = "#{matcher_script} \"#{when_command}\" #{matcher_function_name} #{@output_dir}"
-    output = `#{cmd} 2>&1`
-    exit_status = $CHILD_STATUS.exitstatus
-
-    puts "Matcher generation output for #{test_name}:"
-    puts output
-    puts "Exit status: #{exit_status}"
-
-    if exit_status != 0
-      puts "Warning: Matcher generation failed for #{test_name}"
-      return
+    SysExec.run(cmd, timeout: 10) do |stdout, stderr, status|
+      if status != 0
+        puts "Warning: Matcher generation failed for #{test_name}"
+        puts "output: #{stdout}"
+        puts "stderr: #{stderr}"
+        return
+      end
     end
 
     # Track the generated matcher file

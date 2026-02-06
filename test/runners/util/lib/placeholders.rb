@@ -2,9 +2,9 @@
 # The substitution is performed using the %{variable_name} syntax.
 #
 # Usage examples
-# substitute_placeholders("run %{when_command}", my_obj)
-# substitute_placeholders("run %{when_command}", my_obj, exclusions: [:internal_state])
-# substitute_placeholders("run %{when_command}", my_obj, inclusions: [:when_command, :runner])
+# Placeholders.substitute("run %{when_command}", my_obj)
+# Placeholders.substitute("run %{when_command}", my_obj, exclusions: [:internal_state])
+# Placeholders.substitute("run %{when_command}", my_obj, inclusions: [:when_command, :runner])
 
 module Placeholders
   def self.substitute(string, source, inclusions: nil, exclusions: nil)

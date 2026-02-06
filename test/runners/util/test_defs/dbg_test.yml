@@ -1,0 +1,7 @@
+output_dir: tmp
+shellspec_name: "040_zelta_tests_spec"
+describe_desc: "Run zelta commands on divergent tree"
+test_list:
+  - test_name: match_after_divergence
+    it_desc: show divergence - %{when_command}
+    when_command: zelta match $SANDBOX_ZELTA_SRC_EP $SANDBOX_ZELTA_TGT_EP
