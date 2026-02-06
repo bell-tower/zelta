@@ -1,8 +1,5 @@
 #!/usr/bin/awk -f
 
-# TODO: transform lines like "23K sent, 8 streams received in 0.14 seconds"
-# TODO: into "* sent, 8 streams received in * seconds"
-
 BEGIN {
     # env_names - accept colon delmited list of env var names
     # create two corresponding arrays
@@ -45,11 +42,20 @@ BEGIN {
     gsub(/[[:space:]]+/, " ", $0)
     gsub(/@zelta_[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}\.[0-9]{2}\.[0-9]{2}/, "@zelta_\"*\"",$0)
     gsub(/`/, "\\`", $0)
-    gsub(/[0-9]+[KMGT]? sent, [0-9]+ streams received in [0-9]+\.[0-9]+ seconds/, "* sent, * streams received in * seconds", $0)
+
+    # wildcard time and quantity sent
+    if (match($0, /[0-9]+[KMGT]? sent, [0-9]+ streams/)) {
+        # Extract the part with streams
+        streams_part = substr($0, RSTART, RLENGTH)
+        # Extract just the number before " streams"
+        match(streams_part, /[0-9]+ streams/)
+        stream_count = substr(streams_part, RSTART, RLENGTH)
+        gsub(/[0-9]+[KMGT]? sent, [0-9]+ streams received in [0-9]+\.[0-9]+ seconds/, "* sent, " stream_count " received in * seconds", $0)
+    }
 
     # substitute env var name for any value matching it's value
     for (i = 1; i <= env_count; i++) {
-        gsub(env_values_arr[i], "$" env_names_arr[i], $0)
+        gsub(env_values_arr[i], "${" env_names_arr[i] "}", $0)
     }
 
     lines[count++] = $0
