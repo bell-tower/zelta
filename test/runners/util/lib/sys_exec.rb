@@ -4,8 +4,9 @@ require 'timeout'
 
 module SysExec
   class ExecutionTimeout < StandardError; end
+  class SysExecFailed < StandardError; end
 
-  def self.run(cmd, timeout: 30, debug: true)
+  def self.run(cmd, timeout: 30, raise_on_failure: true, debug: true)
     puts "Executing: #{cmd}" if debug
 
     stdout = ''
@@ -14,38 +15,13 @@ module SysExec
     pid = nil
     timed_out = false
 
+    # handle timeouts, always raise an exception if the command times out
     begin
       Open3.popen3(cmd) do |stdin, out, err, wait_thr|
         pid = wait_thr.pid
         stdin.close
 
-        # Non-blocking read with timeout
-        start_time = Time.now
-
-        loop do
-          if Time.now - start_time > timeout
-            timed_out = true
-            break
-          end
-
-          # Use select to check if data is available
-          ready = IO.select([out, err], nil, nil, 0.1)
-          if ready
-            ready[0].each do |io|
-              begin
-                stdout << io.read_nonblock(1024) if io == out
-                stderr << io.read_nonblock(1024) if io == err
-              rescue IO::WaitReadable
-                # Nothing available right now
-              rescue EOFError
-                # Stream closed
-              end
-            end
-          end
-
-          # Check if process finished
-          break unless wait_thr.alive?
-        end
+        timed_out = read_streams_with_timeout(out, err, stdout, stderr, wait_thr, timeout)
 
         if timed_out
           Process.kill('TERM', pid) rescue nil
@@ -60,29 +36,69 @@ module SysExec
     end
 
     if timed_out
-      env_cmd = cmd.gsub(/\$\{?(\w+)\}?/) { ENV[$1] || "#{$&}:undefined" }
-
-      error_msg = <<~MSG
-          \nERROR: Command timed out after #{timeout} seconds
-          Command: #{cmd}
-          Command with env substitution: #{env_cmd}
-          STDOUT so far:
-        #{stdout.lines.map { |line| "  : #{line}" }.join}
-          STDERR so far:
-        #{stderr.lines.map { |line| "  : #{line}" }.join}
-      MSG
-
-      error_msg = error_msg.lines.map { |line| "*** #{line}" }.join
-
-      raise ExecutionTimeout, error_msg
+      raise ExecutionTimeout, error_msg(reason: "Command timed out after #{timeout} seconds",
+                                        cmd: cmd, stdout: stdout, stderr: stderr)
     end
 
     if debug
       puts "STDOUT: #{stdout}" unless stdout.empty?
       puts "STDERR: #{stderr}" unless stderr.empty?
-      puts "Exit status: #{status.exitstatus}"
+      puts "Exit status: #{status&.exitstatus}"
     end
 
-    { stdout: stdout, stderr: stderr, exit_status: status.exitstatus }
+    # if command failed and raise_on_failure is true, raise an exception
+    if status && status.exitstatus != 0 && raise_on_failure
+      raise SysExecFailed,error_msg(reason: "Command failed with exit status #{status.exitstatus}",
+                                    cmd: cmd, stdout: stdout, stderr: stderr)
+    end
+
+    { stdout: stdout, stderr: stderr, exit_status: status&.exitstatus }
   end
+  def self.read_streams_with_timeout(out, err, stdout, stderr, wait_thr, timeout)
+    start_time = Time.now
+
+    loop do
+      if Time.now - start_time > timeout
+        return true
+      end
+
+      # Use select to check if data is available
+      ready = IO.select([out, err], nil, nil, 0.1)
+      if ready
+        ready[0].each do |io|
+          begin
+            stdout << io.read_nonblock(1024) if io == out
+            stderr << io.read_nonblock(1024) if io == err
+          rescue IO::WaitReadable
+            # Nothing available right now
+          rescue EOFError
+            # Stream closed
+          end
+        end
+      end
+
+      # Check if process finished
+      break unless wait_thr.alive?
+    end
+
+    false
+  end
+
+  def self.error_msg(reason:, cmd:, stdout:, stderr:)
+    env_cmd = cmd.gsub(/\$\{?(\w+)\}?/) { ENV[$1] || "#{$&}:undefined" }
+
+    msg = <<~MSG
+        \nERROR: #{reason}
+        Command: #{cmd}
+        Command with env substitution: #{env_cmd}
+        STDOUT so far:
+      #{stdout.lines.map { |line| "  : #{line}" }.join}
+        STDERR so far:
+      #{stderr.lines.map { |line| "  : #{line}" }.join}
+    MSG
+
+    msg.lines.map { |line| "*** #{line}" }.join
+  end
+
+  private_class_method :error_msg, :read_streams_with_timeout
 end
