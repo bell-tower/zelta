@@ -31,6 +31,9 @@ MATCHER_FL=${OUT_DIR}/${func_name}.sh
 mkdir -p "$OUT_DIR"
 
 if ! eval "$zelta_cmd" > "$OUT_FL" 2> "$ERR_FL"; then
+   # zelta exiting with error is allowed, then stderr should have output that will be put into
+   # a test
+   # TODO: test this case where zelta exits with non-zero code, does the test generator work correctly?
    printf " ❌ Zelta command failed: %s\n\n" "$zelta_cmd"
    cat "$ERR_FL"
 fi
@@ -48,4 +51,5 @@ if [ $? -eq 0 ] && [ -s "$MATCHER_FL" ]; then
     printf " ✅ Success, matcher generated to file %s\n\n" "$MATCHER_FL"
 else
     printf "\n ❌ Matcher generation failed!\n"
+    exit 1
 fi
