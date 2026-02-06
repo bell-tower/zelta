@@ -1,7 +1,7 @@
 setup_env() {
     DEBUG_MODE=$1
     if [ -n "$DEBUG_MODE" ]; then
-
+        . test/runners/setup_debug_env.sh
     else
         printf '%s\n' "--> Normal shellspec Run"
         . test/runners/reset_env.sh   # reset the env, use test_helper.sh version

@@ -58,6 +58,9 @@ BEGIN {
         gsub(env_values_arr[i], "${" env_names_arr[i] "}", $0)
     }
 
+    # remove trailing spaces
+    sub(/[[:space:]]+$/, "", $0)
+
     lines[count++] = $0
 }
 

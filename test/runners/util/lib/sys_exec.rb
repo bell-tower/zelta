@@ -41,8 +41,8 @@ module SysExec
     end
 
     if debug
-      puts "STDOUT: #{stdout}" unless stdout.empty?
-      puts "STDERR: #{stderr}" unless stderr.empty?
+      puts "STDOUT: #{stdout.encode('UTF-8', invalid: :replace, undef: :replace)}" unless stdout.empty?
+      puts "STDERR: #{stderr.encode('UTF-8', invalid: :replace, undef: :replace)}" unless stderr.empty?
       puts "Exit status: #{status&.exitstatus}"
     end
 
@@ -67,8 +67,10 @@ module SysExec
       if ready
         ready[0].each do |io|
           begin
-            stdout << io.read_nonblock(1024) if io == out
-            stderr << io.read_nonblock(1024) if io == err
+            data = io.read_nonblock(1024)
+            data = data.force_encoding('UTF-8').encode('UTF-8', invalid: :replace, undef: :replace)
+            stdout << data if io == out
+            stderr << data if io == err
           rescue IO::WaitReadable
             # Nothing available right now
           rescue EOFError

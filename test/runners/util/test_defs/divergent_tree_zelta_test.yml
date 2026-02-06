@@ -1,8 +1,8 @@
 output_dir: tmp
-shellspec_name: "040_zelta_tests_spec.sh"
+shellspec_name: "040_zelta_tests_spec"
 describe_desc: "Run zelta commands on divergent tree"
 skip_if_list:
-  - condition: if 'SANDBOX_ZELTA_SRC_DS undefined' test -z "$SANDBOX_ZELTA_SRD_DS"
+  - condition: if 'SANDBOX_ZELTA_SRC_DS undefined' test -z "$SANDBOX_ZELTA_SRC_DS"
   - condition: if 'SANDBOX_ZELTA_TGT_DS undefined' test -z "$SANDBOX_ZELTA_TGT_DS"
 
 test_list:

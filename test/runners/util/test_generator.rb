@@ -14,7 +14,7 @@ class TestGenerator
   GENERATE_MATCHER_SH_SCRIPT = './generate_matcher.sh'
   private_constant :GENERATE_MATCHER_SH_SCRIPT
 
-  attr_reader :config, :output_dir, :shellspec_name, :describe_desc, :test_list,
+  attr_reader :config, :output_dir, :shellspec_name, :describe_desc, :test_list, :skip_if_list,
               :matcher_files, :wip_file_path, :final_file_path
 
   def initialize(yaml_file_path)
@@ -27,6 +27,7 @@ class TestGenerator
     @describe_desc = @config['describe_desc']
     @output_dir = @config['output_dir']
     @test_list = @config['test_list'] || []
+    @skip_if_list = @config['skip_if_list'] || []
     @matcher_files = []
     @wip_file_path = File.join(@output_dir, "#{@shellspec_name}_wip.sh")
     @final_file_path = File.join(@output_dir, "#{@shellspec_name}.sh")
@@ -62,6 +63,12 @@ class TestGenerator
   def create_wip_file
     File.open(@wip_file_path, 'w') do |file|
       file.puts "Describe '#{@describe_desc}'"
+
+      # Add Skip If statements for each condition
+      @skip_if_list.each do |skip_item|
+        file.puts "  Skip #{skip_item['condition']}"
+      end
+      file.puts '' unless @skip_if_list.empty?
     end
     puts "Created WIP file: #{@wip_file_path}"
   end
@@ -112,20 +119,28 @@ class TestGenerator
     File.open(@wip_file_path, 'a') do |file|
       file.puts "  It \"#{it_desc.gsub('"', '\\"')}\""
 
-      # Check for stderr output
-      stderr_file = File.join(@output_dir, "#{test_name}_stderr.out")
+      func_name = matcher_func_name(test_name)
+
+      # TODO: clean up all the trial and error with shellspec error output, documented approaches don't work!
+     # Check for stderr output
+      stderr_file = File.join(@output_dir, func_name, "#{func_name}_stderr.out")
+      expected_error = nil
       if File.exist?(stderr_file) && !File.zero?(stderr_file)
         expected_error = format_expected_error(stderr_file)
-        file.puts expected_error
-        status_line = '    The status should be failure'
+        #file.puts expected_error
+        #status_line = '    The status should be failure'
       else
-        status_line = '    The status should equal 0'
+        #status_line = '    The status should equal 0'
       end
+
+      # TODO: zelta exits with 0 even when there is error output
+      #status_line = '    The status should equal 0'
+      status_line = '    The status should be success'
 
       file.puts "    When call #{when_command}"
       file.puts "    The output should satisfy #{matcher_func_name(test_name)}"
 
-      file.puts '    The error should equal "$expected_error"' if File.exist?(stderr_file) && !File.zero?(stderr_file)
+      file.puts "    The error should equal \"#{expected_error}\"\n" if expected_error
       file.puts status_line
 
       file.puts '  End'
@@ -133,7 +148,7 @@ class TestGenerator
     end
   end
 
-  def format_expected_error(stderr_file)
+  def v1_format_expected_error(stderr_file)
     lines = read_stderr_file(stderr_file)
     result = "    expected_error=%text\n"
     lines.each do |line|
@@ -141,6 +156,28 @@ class TestGenerator
     end
     "#{result}    End\n"
   end
+  # expected_error() { %text
+  # #|warning: insufficient snapshots; performing full backup for 3 datasets
+  # #|warning: missing `zfs allow` permissions: readonly,mountpoint
+  # }
+  def v2_format_expected_error(stderr_file)
+    lines = read_stderr_file(stderr_file)
+    result = "    expected_error=$(%text\n"
+    result = "    expected_error() { %text\n"
+    lines.each do |line|
+      result += "    #|#{line}\n"
+    end
+    "#{result}    }\n"
+  end
+
+  def format_expected_error(stderr_file)
+    lines = read_stderr_file(stderr_file)
+    lines.each do |line|
+      line.gsub!('`', '\\\`')
+    end
+    lines.join("\n")
+  end
+
 
   def read_stderr_file(stderr_file)
     File.readlines(stderr_file).map(&:chomp)
