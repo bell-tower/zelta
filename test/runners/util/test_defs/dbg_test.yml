@@ -1,7 +1,7 @@
 output_dir: tmp
-shellspec_name: "040_zelta_tests_spec"
-describe_desc: "Run zelta commands on divergent tree"
+shellspec_name: "050_zelta_tests_spec"
+describe_desc: "Run more zelta commands on divergent tree"
 test_list:
-  - test_name: rotate_after_divergence
-    it_desc: rotates after divergence - %{when_command}
-    when_command: zelta rotate "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP"
+  - test_name: revert_after_rotate
+    it_desc: revert after rotate - %{when_command}
+    when_command: zelta revert "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP"

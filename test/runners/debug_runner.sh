@@ -26,8 +26,8 @@ run_specs_to_040() {
     #SPEC_OPTIONS='--xtrace --shell /opt/homebrew/bin/bash'
     #shellspec "$SPEC_OPTIONS" --pattern "test/00*_spec.sh|test/01*_spec.sh|test/021*_spec.sh|test/99_cleanup_spec.sh"
     #shellspec "$SPEC_OPTIONS" --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/99_cleanup_spec.sh"
-    #shellspec --xtrace --shell /opt/homebrew/bin/bash  --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/040_zelta_spec.sh"
-    shellspec --xtrace --shell /opt/homebrew/bin/bash  --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh"
+    shellspec --xtrace --shell /opt/homebrew/bin/bash  --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/040_zelta_spec.sh"
+    #shellspec --xtrace --shell /opt/homebrew/bin/bash  --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh"
 }
 
 manual_run() {
@@ -51,17 +51,34 @@ spec_run
 
 
 # current spec list
-#shellspec test/00_install_spec.sh:@1-1
-#shellspec test/00_install_spec.sh:@1-2
-#shellspec test/01_no_op_spec.sh:@1-1-1
-#shellspec test/01_no_op_spec.sh:@1-1-2
-#shellspec test/01_no_op_spec.sh:@1-1-3
-#shellspec test/01_no_op_spec.sh:@1-1-4
-#shellspec test/01_no_op_spec.sh:@1-2-1
-#shellspec test/01_no_op_spec.sh:@1-2-2
-#shellspec test/01_no_op_spec.sh:@1-2-3
-#shellspec test/01_no_op_spec.sh:@1-2-4
-#shellspec test/021_setup_pools_spec.sh:@1-1
-#shellspec test/021_setup_pools_spec.sh:@1-2
-#shellspec test/021_setup_pools_spec.sh:@2-1
-#shellspec test/021_setup_pools_spec.sh:@2-2
+rlogwood@lumacp zelta % shellspec --list examples
+test/00_install_spec.sh:@1-1
+test/00_install_spec.sh:@1-2
+test/01_no_op_spec.sh:@1-1-1
+test/01_no_op_spec.sh:@1-1-2
+test/01_no_op_spec.sh:@1-1-3
+test/01_no_op_spec.sh:@1-1-4
+test/01_no_op_spec.sh:@1-2-1
+test/01_no_op_spec.sh:@1-2-2
+test/01_no_op_spec.sh:@1-2-3
+test/01_no_op_spec.sh:@1-2-4
+test/021_setup_pools_spec.sh:@1-1
+test/021_setup_pools_spec.sh:@1-2
+test/021_setup_pools_spec.sh:@2-1
+test/021_setup_pools_spec.sh:@2-2
+test/022_setup_tree_spec.sh:@1-1-1
+test/022_setup_tree_spec.sh:@1-1-2
+test/022_setup_tree_spec.sh:@1-1-3
+test/022_setup_tree_spec.sh:@1-2-1
+test/03_backup_spec.sh:@1-1
+test/03_backup_spec.sh:@1-2
+test/040_zelta_tests_spec.sh:@1-1
+test/040_zelta_tests_spec.sh:@1-2
+test/040_zelta_tests_spec.sh:@1-3
+test/040_zelta_tests_spec.sh:@1-4
+test/99_cleanup_spec.sh:@1-1-1
+test/99_cleanup_spec.sh:@1-1-2
+test/99_cleanup_spec.sh:@1-2-1
+test/99_cleanup_spec.sh:@1-2-2
+test/99_cleanup_spec.sh:@1-3-1
+test/99_cleanup_spec.sh:@1-3-2

@@ -13,6 +13,76 @@
 - test generated test
 - if it works, put it into the test directory and test it normally
 
+### Working with the test generator
+
+It can be tedious to setup your environment with the state of ZFS datasets
+that represent the conditions under which you want to test Zelta.
+
+> [!IMPORTANT]
+> Use the suggested aliases ([See Alias Helpers](../doc/README_AliasHelpers.md)) 
+> to put the desired state, the aliases are referenced in the recipes below
+>
+
+> [!TIP]
+> Review the [test/runners/README.md](../README.md) for an overview of contents in this directory.
+
+#### Running clean tests with standard environment
+
+1. Update `test/runners/test_env.sh` with desired pools and datasets
+   > [!CAUTION]
+   > the pools and datasets referenced in this file will be removed and modified by the steps below.
+
+2. Reset the environment to the standard state
+   ```shell
+   # setup fresh standard env, remove any custom pools and datasets referenced in test_env.sh`
+   zrenv
+   ````
+ 3. Run shellspec tests
+    ```shell
+    shellspec
+    ```
+
+#### Putting the zfs tree into a desired state
+
+2. update `test/runners/debug_runner.sh` with desired functions
+   > [!IMPORTANT]
+   > You must modify the debug_runner.sh to setup the environment to match the desired state.
+
+   `zdbg # use the alias helper`
+
+
+> [!IMPORTANT]
+> You must name your test definition so that it runs in the correct order.
+> The shellspec test in the test directory are named with a number prefix 
+> to ensure they run in the correct order.
+
+#### Running the test generator
+1. put the zfs pools into their desired state
+2. create a test definition in test_defs, say my_new_test.yml
+3. run the shellspec test generator 
+   > [!IMPORTANT]
+   > give your test an ordered name so that it runs in the correct order.
+   > the test name must include _spec at the end:
+   > shellspec_name: "###_my_test_spec"
+    ```shell
+    cd test/runners/util
+    run_test_gen_dbg_env.rb ./test_defs/my_new_test.yml
+    ```
+4. put the zfs pools back into the desired starting state
+5. manually run the generated test to verify it works as expected
+   ```shell 
+   zcd
+   shellspec test/runners/util/tmp/my_test_spec.sh  # assuming the generated test is in tmp and has that name
+   ```
+6. if the test works, copy it into the test directory and run it normally
+   ```shell 
+   # generate you test with an ordered name, using a numbered prefix
+   cp test/runners/util/tmp/###_my_test_spec.sh test/
+   # there is a working file you must remove, otherwise shellspec will find it and try to run it
+   rm test/runners/util/tmp/wip_###_my_test_spec.sh 
+   zrenv  # reset the environment to the standard state
+   shellspec # run the full tests suite
+   ```
 
 
 ## Generating a shellspec matcher function 
