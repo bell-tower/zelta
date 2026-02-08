@@ -111,8 +111,7 @@ Describe 'Run zelta commands on divergent tree'
   It "rotates after divergence - zelta rotate \"$SANDBOX_ZELTA_SRC_EP\" \"$SANDBOX_ZELTA_TGT_EP\""
     When call zelta rotate "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP"
     The output should satisfy output_for_rotate_after_divergence
-    The error should equal "warning: insufficient snapshots; performing full backup for 3 datasets
-warning: missing \`zfs allow\` permissions: readonly,mountpoint"
+    The error should equal "warning: insufficient snapshots; performing full backup for 3 datasets"
     The status should be success
   End
 
