@@ -1,9 +1,5 @@
 #!/bin/sh
 
-#SETUP_TREE_SPECS="test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/040_zelta_tests_spec.sh"
-#TEST_CONFIG="test_defs/050_zelta_revert_test.yml"
-#GENERATED_TEST_NAME="050_zelta_revert_spec.sh"
-
 # Check for required arguments
 if [ $# -lt 3 ]; then
     printf "Usage: %s <generated_test_name> <test_config> <output_dir> <setup_specs>\n" "$0" >&2
@@ -19,9 +15,6 @@ if [ $# -lt 3 ]; then
     printf " test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/040_zelta_tests_spec.sh\n"
     exit 1
 fi
-
-# setup test aliases
-#. ./test_aliases.sh
 
 GENERATED_TEST_NAME=$1
 TEST_CONFIG=$2
