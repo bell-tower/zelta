@@ -15,10 +15,7 @@
     ```
    - TODO: confirm if usr/bin/mount *, /usr/bin/mkdir * are needed
  
-  - setup zfs allow on your source and target machines for each pool you're testing with 
-   ```shell
-   sudo zfs allow dever rename,mount,create (poolname)
-   ```
+  - setup zfs allow on your source and target machines will be set up automatically for your test pools
 
 ## TODOS
 

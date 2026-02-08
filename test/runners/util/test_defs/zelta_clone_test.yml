@@ -1,0 +1,7 @@
+output_dir: tmp
+shellspec_name: "060_zelta_clone_spec"
+describe_desc: "Test clone"
+test_list:
+  - test_name: clone
+    it_desc: clone sub2 - %{when_command}
+    when_command: zelta clone "$SANDBOX_ZELTA_SRC_EP/sub2" "$SANDBOX_ZELTA_SRC_EP/copy_of_sub2"

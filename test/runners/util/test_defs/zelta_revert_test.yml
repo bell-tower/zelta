@@ -14,5 +14,3 @@ test_list:
   - test_name: revert
     it_desc: revert to last snapshot - %{when_command}
     when_command: zelta revert  "$SANDBOX_ZELTA_SRC_EP"@manual_test
-
-#zelta snapshot --snap-name "manual_$(date +%Y%m%d)" "$SANDBOX_ZELTA_SRC_EP"
