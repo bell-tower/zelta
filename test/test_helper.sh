@@ -221,11 +221,13 @@ make_src_pool() {
 	tmpfile_touch "src_pool_created"
 
 	# Grant ZFS permissions for source pool
+	# original list snapshot,bookmark,send,hold
+	ZFS_SRC_PERMS=snapshot,bookmark,send,hold,clone,create,mount,canmount,mountpoint,rename,readonly
 	if [ -n "$SANDBOX_ZELTA_SRC_REMOTE" ]; then
 		#ssh -n "$SANDBOX_ZELTA_SRC_REMOTE"
-		src_exec "zfs allow -u \$USER snapshot,bookmark,send,hold $SANDBOX_ZELTA_SRC_POOL"
+		src_exec "zfs allow -u \$USER $ZFS_SRC_PERMS $SANDBOX_ZELTA_SRC_POOL"
 	else
-		sudo zfs allow -u "$USER" snapshot,bookmark,send,hold "$SANDBOX_ZELTA_SRC_POOL"
+		sudo zfs allow -u "$USER" $ZFS_SRC_PERMS "$SANDBOX_ZELTA_SRC_POOL"
 	fi
 	return $?
 }
@@ -235,11 +237,13 @@ make_tgt_pool() {
 	tmpfile_touch "tgt_pool_created"
 	
 	# Grant ZFS permissions for target pool
+	# original list receive,mount,create,canmount,rename
+	ZFS_TGT_PERMS=receive,snapshot,bookmark,send,hold,clone,create,mount,canmount,mountpoint,rename,readonly
 	if [ -n "$SANDBOX_ZELTA_TGT_REMOTE" ]; then
 		#ssh -n "$SANDBOX_ZELTA_TGT_REMOTE" "zfs allow -u \$USER mount,create,rename $SANDBOX_ZELTA_TGT_POOL"
-		tgt_exec "zfs allow -u \$USER receive,mount,create,canmount,rename $SANDBOX_ZELTA_TGT_POOL"
+		tgt_exec "zfs allow -u \$USER $ZFS_TGT_PERMS $SANDBOX_ZELTA_TGT_POOL"
 	else
-		sudo zfs allow -u "$USER" receive,mount,create,canmount,rename "$SANDBOX_ZELTA_TGT_POOL"
+		sudo zfs allow -u "$USER" $ZFS_TGT_PERMS "$SANDBOX_ZELTA_TGT_POOL"
 	fi
 	return $?
 }
@@ -298,17 +302,17 @@ make_initial_tree() {
 
 
 	# Create root dataset
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS" || return 1
 
 	# Create child datasets
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub1" || return 1
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub2" || return 1
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub2/orphan" || return 1
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub3" || return 1
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub3/space\ name" || return 1
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub4" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub1" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub2" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub2/orphan" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub3" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub3/space\ name" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub4" || return 1
 	src_exec zfs create -sV 8M "$SANDBOX_ZELTA_SRC_DS/sub4/zvol" || return 1
-	src_exec zfs create -o encryption=on -o keyformat=raw -o "keylocation=file:///tmp/zfs_test_enc_key_${SANDBOX_ZELTA_PROCNUM}" "$SANDBOX_ZELTA_SRC_DS/sub4/encrypted" || return 1
+	src_exec zfs create -u -o encryption=on -o keyformat=raw -o "keylocation=file:///tmp/zfs_test_enc_key_${SANDBOX_ZELTA_PROCNUM}" "$SANDBOX_ZELTA_SRC_DS/sub4/encrypted" || return 1
 
 	return 0
 }
@@ -320,7 +324,7 @@ make_initial_tree() {
 
 make_tree_divergence() {
 	# Generate divergence
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub1/child" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub1/child" || return 1
 	tgt_exec zfs create -u "$SANDBOX_ZELTA_TGT_DS/sub1/kid" || return 1
 	src_exec zfs destroy "$SANDBOX_ZELTA_SRC_DS/sub2@start" || return 1
 	tgt_exec zfs snapshot "$SANDBOX_ZELTA_TGT_DS/sub3/space\ name@blocker" || return 1
@@ -332,3 +336,11 @@ make_tree_divergence() {
 	return 0
 }
 
+add_tree_delta() {
+	# make changes, we'll call this after snapshotting
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub5" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub5/child1" || return 1
+	src_exec zfs destroy -r "$SANDBOX_ZELTA_SRC_DS/sub3/space\ name" || return 1
+
+	return 0
+}

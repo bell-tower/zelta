@@ -33,9 +33,19 @@ properties:
         - it_desc
         - when_command
       properties:
+        setup_scripts:
+          type: array
+          description: Scripts to source/run before executing when_command to set up environment
+          items:
+            type: string
+            description: Path to script file (relative to test directory or absolute)
         test_name:
           type: string
         it_desc:
           type: string
-        zelta_command:
+        when_command:
           type: string
+        allow_no_output:
+          type: boolean
+          description: If true, skip validation that command produces output
+          default: false

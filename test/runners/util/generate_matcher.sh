@@ -1,22 +1,29 @@
 #!/bin/sh
 
 # Check for required arguments
-if [ $# -lt 3 ] || [ $# -gt 4 ]; then
-    printf "Usage: %s <zelta command> <matcher_function_name> <output_dir> <env_var_name1:env_var_name2:...>\n" "$0" >&2
+if [ $# -lt 3 ] || [ $# -gt 5 ]; then
+    printf "Usage: %s <zelta command> <matcher_function_name> <output_dir> [env_var_name1:env_var_name2:...] [allow_no_output]\n" "$0" >&2
     printf "\t-> * put your zfs datasets in the desired state before running\n"
     printf "\t-> * to capture the zelta output that would be captured by a test\n"
+    printf "\t-> * allow_no_output: 'true' to skip output validation (optional)\n"
     exit 1
 fi
 
 zelta_cmd=$1
 func_name=$2
 output_dir=$3
-
-if [ $# -eq 4 ]; then
+set -x
+if [ $# -ge 4 ]; then
     env_var_names=$4
 else
     # default to
     env_var_names="SANDBOX_ZELTA_TGT_DS:SANDBOX_ZELTA_SRC_DS"
+fi
+
+if [ $# -eq 5 ]; then
+    allow_no_output=$5
+else
+    allow_no_output="false"
 fi
 
 echo "zelta_cmd={$zelta_cmd}"
@@ -30,7 +37,7 @@ MATCHER_FL=${OUT_DIR}/${func_name}.sh
 
 mkdir -p "$OUT_DIR"
 
-if ! eval "$zelta_cmd" > "$OUT_FL" 2> "$ERR_FL"; then
+if ! sh -c "$zelta_cmd" > "$OUT_FL" 2> "$ERR_FL"; then
    # zelta exiting with error is allowed, then stderr should have output that will be put into
    # a test
    # TODO: test this case where zelta exits with non-zero code, does the test generator work correctly?
@@ -39,9 +46,22 @@ if ! eval "$zelta_cmd" > "$OUT_FL" 2> "$ERR_FL"; then
 fi
 
 if [ ! -s "$OUT_FL" ]; then
-    printf "\n ❌ Error: zelta produced no output\n"
-    printf "****-> review and update zelta cmd: \"%s\"\n" "$zelta_cmd"
-    exit 1
+    if [ "$allow_no_output" != "true" ]; then
+        printf "\n ❌ Error: zelta produced no output\n"
+        printf "****-> review and update zelta cmd: \"%s\"\n" "$zelta_cmd"
+        exit 1
+    else
+        printf "\n ⚠️  Command produced no output (skipping matcher generation)\n"
+        set +x
+        exit 0
+    fi
+fi
+
+# Skip matcher generation if allow_no_output is true
+if [ "$allow_no_output" = "true" ]; then
+    printf "\n ℹ️  Skipping matcher generation (allow_no_output=true)\n"
+    set +x
+    exit 0
 fi
 
 printf "Generating matcher function...\n"
@@ -53,3 +73,4 @@ else
     printf "\n ❌ Matcher generation failed!\n"
     exit 1
 fi
+set +x

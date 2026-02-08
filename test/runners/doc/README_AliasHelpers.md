@@ -1,7 +1,7 @@
 ### Suggested alias helpers:
 > NOTE: Adding new tests often requires setting up the
 > zfs pools and datasets in a specific way to create
-> an appropriate test enviroment from which you can
+> an appropriate test environment from which you can
 > run zelta commands in the same way they are run for
 > a full test. These aliases help simplify that iterative
 > process.

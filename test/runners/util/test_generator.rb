@@ -80,14 +80,16 @@ class TestGenerator
       it_desc = Placeholders.substitute(test['it_desc'], test, inclusions: [:when_command])
 
       when_command = test['when_command']
+      setup_scripts = test['setup_scripts'] || []
+      allow_no_output = test['allow_no_output'] || false
 
       puts "Processing test: #{test_name}"
 
       # Generate matcher files
-      generate_matcher_files(test_name, when_command)
+      generate_matcher_files(test_name, when_command, setup_scripts, allow_no_output)
 
       # Append It clause to WIP file
-      append_it_clause(test_name, it_desc, when_command)
+      append_it_clause(test_name, it_desc, when_command, allow_no_output)
     end
 
     # Close Describe block
@@ -96,7 +98,7 @@ class TestGenerator
     end
   end
 
-  def generate_matcher_files(test_name, when_command)
+  def generate_matcher_files(test_name, when_command, setup_scripts, allow_no_output)
     matcher_script = GENERATE_MATCHER_SH_SCRIPT
     matcher_function_name = matcher_func_name(test_name)
 
@@ -105,17 +107,36 @@ class TestGenerator
       return
     end
 
-    cmd = "#{matcher_script} \"#{when_command}\" #{matcher_function_name} #{@output_dir}"
+    # Build command with optional setup scripts
+    full_command = build_command_with_setup(when_command, setup_scripts)
+
+    # Add env var names (default) and allow_no_output flag
+    env_vars = "SANDBOX_ZELTA_TGT_DS:SANDBOX_ZELTA_SRC_DS"
+    allow_no_output_flag = allow_no_output ? "true" : "false"
+
+    cmd = "#{matcher_script} \"#{full_command}\" #{matcher_function_name} #{@output_dir} #{env_vars} #{allow_no_output_flag}"
     SysExec.run(cmd, timeout: 10)
 
-    # Track the generated matcher file
-    func_name = matcher_func_name(test_name)
-    matcher_file = File.join(@output_dir, func_name, "#{func_name}.sh")
-    puts "Generated matcher file: #{matcher_file}"
-    @matcher_files << matcher_file if File.exist?(matcher_file)
+    unless allow_no_output then
+      # Track the generated matcher file
+      func_name = matcher_func_name(test_name)
+      matcher_file = File.join(@output_dir, func_name, "#{func_name}.sh")
+      puts "Generated matcher file: #{matcher_file}"
+      @matcher_files << matcher_file if File.exist?(matcher_file)
+    end
   end
 
-  def append_it_clause(test_name, it_desc, when_command)
+  def build_command_with_setup(when_command, setup_scripts)
+    return when_command if setup_scripts.empty?
+
+    # Build source commands for each setup script (using . for POSIX compatibility)
+    source_cmds = setup_scripts.map { |script| ". #{script}" }
+
+    # Combine all source commands with the actual command
+    "#{source_cmds.join(' && ')} && #{when_command}"
+  end
+
+  def append_it_clause(test_name, it_desc, when_command, allow_no_output)
     File.open(@wip_file_path, 'a') do |file|
       file.puts "  It \"#{it_desc.gsub('"', '\\"')}\""
 
@@ -138,7 +159,8 @@ class TestGenerator
       status_line = '    The status should be success'
 
       file.puts "    When call #{when_command}"
-      file.puts "    The output should satisfy #{matcher_func_name(test_name)}"
+
+      file.puts "    The output should satisfy #{matcher_func_name(test_name)}" unless allow_no_output
 
       file.puts "    The error should equal \"#{expected_error}\"\n" if expected_error
       file.puts status_line
