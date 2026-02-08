@@ -12,10 +12,11 @@ setup_env() {
 
 run_it() {
     _func=$1
-    if (eval set -x; "$_func";); then
-        printf "✅ %s\n\n" "$_func"
+    #if (eval set -x; "$_func";); then
+    if (eval "$_func";); then
+        printf " ✅ %s\n\n" "$_func"
     else
-        printf "❌ %s\n\n" "$_func"
+        printf " ❌ %s\n\n" "$_func"
         exit 1
     fi
 }

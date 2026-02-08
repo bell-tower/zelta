@@ -1,4 +1,4 @@
-set -x
+#set -x
 # pools
 export SANDBOX_ZELTA_SRC_POOL=apool
 export SANDBOX_ZELTA_TGT_POOL=bpool
@@ -17,4 +17,4 @@ export SANDBOX_ZELTA_SRC_REMOTE=dever@zfsdev # Ubuntu source
 export SANDBOX_ZELTA_TGT_REMOTE=dever@zfsdev # Ubuntu remote
 #unset SANDBOX_ZELTA_SRC_REMOTE
 #unset SANDBOX_ZELTA_TGT_REMOTE
-set +x
+#set +x

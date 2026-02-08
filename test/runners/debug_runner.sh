@@ -26,8 +26,8 @@ run_specs_to_040() {
     #SPEC_OPTIONS='--xtrace --shell /opt/homebrew/bin/bash'
     #shellspec "$SPEC_OPTIONS" --pattern "test/00*_spec.sh|test/01*_spec.sh|test/021*_spec.sh|test/99_cleanup_spec.sh"
     ##shellspec "$SPEC_OPTIONS" --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/99_cleanup_spec.sh"
-    #shellspec --xtrace --shell /opt/homebrew/bin/bash  --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/040_zelta_tests_spec.sh"
-    shellspec --xtrace --shell /opt/homebrew/bin/bash  --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/050_zelta_revert_spec.sh"
+    shellspec --xtrace --shell /opt/homebrew/bin/bash  --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/040_zelta_tests_spec.sh"
+    #shellspec --xtrace --shell /opt/homebrew/bin/bash  --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/050_zelta_revert_spec.sh"
     #shellspec --xtrace --shell /opt/homebrew/bin/bash  --pattern "test/00*_spec.sh|test/01*_spec.sh|test/02*_spec.sh"
 }
 

@@ -17,7 +17,7 @@ fi
 # extract the process number used when zelta install wsa created
 last_tmp_process_number=$(echo "$last_tmp_installed_zelta_ver" | grep -o '[0-9]\+$')
 
-set -x
+#set -x
 # use discovered zelta dir
 export SANDBOX_ZELTA_TMP_DIR="$last_tmp_installed_zelta_ver"
 
@@ -31,7 +31,7 @@ export ZELTA_DOC="$SANDBOX_ZELTA_TMP_DIR/man"
 export SHELLSPEC_TMPBASE=~/tmp/dbg_shellspecs
 mkdir -p $SHELLSPEC_TMPBASE
 
-set +x
+#set +x
 
 # add the tmp zelta bin if not already on path
 if ! echo ":$PATH:" | grep -q ":$ZELTA_BIN:"; then

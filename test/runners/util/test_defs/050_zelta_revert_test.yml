@@ -1,6 +1,9 @@
 output_dir: tmp
 shellspec_name: "050_zelta_revert_spec"
 describe_desc: "Test revert"
+skip_if_list:
+  - condition: if 'SANDBOX_ZELTA_SRC_DS undefined' test -z "$SANDBOX_ZELTA_SRC_DS"
+
 test_list:
   - test_name: snapshot
     it_desc: take a snapshot of tree before changes - %{when_command}

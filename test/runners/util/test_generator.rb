@@ -30,6 +30,8 @@ class TestGenerator
     @skip_if_list = @config['skip_if_list'] || []
     @matcher_files = []
     @wip_file_path = File.join(@output_dir, "#{@shellspec_name}_wip.sh")
+    # remove _spec to prevent shellspec from finding the WIP file
+    @wip_file_path.sub!('_spec', '')
     @final_file_path = File.join(@output_dir, "#{@shellspec_name}.sh")
     puts "Loading configuration from: #{@config.inspect}\n"
     puts '=' * 60

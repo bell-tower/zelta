@@ -1,5 +1,5 @@
 # Auto-generated ShellSpec test file
-# Generated at: 2026-02-07 23:10:54 -0500
+# Generated at: 2026-02-08 16:43:08 -0500
 # Source: 050_zelta_revert_spec
 # WARNING: This file was automatically generated. Manual edits may be lost.
 
@@ -39,6 +39,8 @@ output_for_revert() {
 }
 
 Describe 'Test revert'
+  Skip if 'SANDBOX_ZELTA_SRC_DS undefined' test -z "$SANDBOX_ZELTA_SRC_DS"
+
   It "take a snapshot of tree before changes - zelta snapshot --snap-name \"manual_test\" \"$SANDBOX_ZELTA_SRC_EP\""
     When call zelta snapshot --snap-name "manual_test" "$SANDBOX_ZELTA_SRC_EP"
     The output should satisfy output_for_snapshot
