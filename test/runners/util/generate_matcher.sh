@@ -17,7 +17,7 @@ if [ $# -ge 4 ]; then
     env_var_names=$4
 else
     # default to
-    env_var_names="SANDBOX_ZELTA_TGT_DS:SANDBOX_ZELTA_SRC_DS"
+    env_var_names="SANDBOX_ZELTA_TGT_DS:SANDBOX_ZELTA_SRC_DS:SANDBOX_ZELTA_TGT_EP:SANDBOX_ZELTA_SRC_EP"
 fi
 
 if [ $# -eq 5 ]; then

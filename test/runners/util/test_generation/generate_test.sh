@@ -20,8 +20,11 @@ GENERATED_TEST_NAME=$1
 TEST_CONFIG=$2
 SETUP_TREE_SPECS=$3
 REPO_ROOT=$(git rev-parse --show-toplevel)
+TEST_GEN_DIR="$REPO_ROOT/test/runners/util/test_generation"
 
 echo "REPO_ROOT is: {$REPO_ROOT}"
+
+. "$TEST_GEN_DIR/setup_tree.sh"
 
 generate_test() {
   printf "\n*\n* generating test %s\n*\n" "$GENERATED_TEST_NAME"
@@ -29,19 +32,9 @@ generate_test() {
   ./test_generator.rb "$TEST_CONFIG"
 }
 
-setup_tree() {
-   printf "\n*\n* setting up tree %s\n*\n" "$SETUP_TREE_SPECS"
-
-   cd "$REPO_ROOT" || return 1
-   . ./test/runners/manual_cleanup.sh
-   #shellspec --xtrace --shell /opt/homebrew/bin/bash  --pattern "$SETUP_TREE_SPECS"
-   shellspec --pattern "$SETUP_TREE_SPECS"
-}
-
 confirm_generated_test_works() {
    printf "\n*\n* confirming test works %s\n*\n" "$GENERATED_TEST_NAME"
 
-   setup_tree
    if shellspec "test/runners/util/tmp/$GENERATED_TEST_NAME"; then
       echo "test confirmed, copy to production"
       rm -f "test/$GENERATED_TEST_NAME"
@@ -54,7 +47,7 @@ confirm_generated_test_works() {
 ## generate and confirm test
 
 # setup zfs pools to desired state before running test
- if ! setup_tree; then
+ if ! setup_tree "$SETUP_TREE_SPECS"; then
       printf "\n ❌ Failed to setup ZFS tree with specs %s\n!" "$SETUP_TREE_SPECS"
       exit 1
  fi
@@ -66,11 +59,10 @@ if ! generate_test; then
 fi
 
 # setup zfs pools to desired state again before running generated test
- if ! setup_tree; then
+ if ! setup_tree "$SETUP_TREE_SPECS"; then
       printf "\n ❌ Failed to setup ZFS tree for testing generated tree with specs %s\n!" "$SETUP_TREE_SPECS"
       exit 1
  fi
-
 
 # confirm generated test works
 if ! confirm_generated_test_works; then
@@ -80,3 +72,4 @@ fi
 
 # good test generated and copied to prod
 printf "\n ✅ Success, Generated test copied to production %s\n\n" "test/$GENERATED_TEST_NAME"
+set +x

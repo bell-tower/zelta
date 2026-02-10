@@ -12,12 +12,13 @@ require_relative 'lib/sys_exec'
 # TestGenerator - Generates ShellSpec test files from YAML configuration
 class TestGenerator
   GENERATE_MATCHER_SH_SCRIPT = './generate_matcher.sh'
+  DEFAULT_ENV_VAR_NAMES = 'SANDBOX_ZELTA_TGT_DS:SANDBOX_ZELTA_SRC_DS:SANDBOX_ZELTA_TGT_EP:SANDBOX_ZELTA_SRC_EP'
   private_constant :GENERATE_MATCHER_SH_SCRIPT
 
   attr_reader :config, :output_dir, :shellspec_name, :describe_desc, :test_list, :skip_if_list,
-              :matcher_files, :wip_file_path, :final_file_path
+              :matcher_files, :wip_file_path, :final_file_path, :env_var_names, :sorted_env_map
 
-  def initialize(yaml_file_path)
+  def initialize(yaml_file_path, env_var_names = DEFAULT_ENV_VAR_NAMES)
     raise "YAML file not found: #{yaml_file_path}" unless File.exist?(yaml_file_path)
 
     @config = YAML.load_file(yaml_file_path)
@@ -33,6 +34,8 @@ class TestGenerator
     # remove _spec to prevent shellspec from finding the WIP file
     @wip_file_path.sub!('_spec', '')
     @final_file_path = File.join(@output_dir, "#{@shellspec_name}.sh")
+    @env_var_names = env_var_names
+    @sorted_env_map = build_sorted_env_map
     puts "Loading configuration from: #{@config.inspect}\n"
     puts '=' * 60
   end
@@ -47,6 +50,15 @@ class TestGenerator
 
   private
 
+  def build_sorted_env_map
+    # Parse and sort env vars by value length (descending)
+    env_map = @env_var_names.split(':').each_with_object({}) do |name, hash|
+      hash[name] = ENV[name] if ENV[name]
+    end
+
+    # Sort by value length descending to replace longest matches first
+    env_map.sort_by { |_name, value| -value.length }
+  end
 
   def matcher_func_name(test_name)
     "output_for_#{test_name}"
@@ -112,20 +124,52 @@ class TestGenerator
     # Build command with optional setup scripts
     full_command = build_command_with_setup(when_command, setup_scripts)
 
-    # Add env var names (default) and allow_no_output flag
-    env_vars = "SANDBOX_ZELTA_TGT_DS:SANDBOX_ZELTA_SRC_DS"
+    # Add env var names and allow_no_output flag
     allow_no_output_flag = allow_no_output ? "true" : "false"
 
-    cmd = "#{matcher_script} \"#{full_command}\" #{matcher_function_name} #{@output_dir} #{env_vars} #{allow_no_output_flag}"
+    cmd = "#{matcher_script} \"#{full_command}\" #{matcher_function_name} #{@output_dir} #{@env_var_names} #{allow_no_output_flag}"
     SysExec.run(cmd, timeout: 10)
 
     unless allow_no_output then
       # Track the generated matcher file
       func_name = matcher_func_name(test_name)
       matcher_file = File.join(@output_dir, func_name, "#{func_name}.sh")
-      puts "Generated matcher file: #{matcher_file}"
-      @matcher_files << matcher_file if File.exist?(matcher_file)
+
+      # Post-process the matcher file to apply env substitutions
+      if File.exist?(matcher_file)
+        post_process_matcher_file(matcher_file)
+        puts "Generated matcher file: #{matcher_file}"
+        @matcher_files << matcher_file
+      end
     end
+  end
+
+  def post_process_matcher_file(matcher_file)
+    # Read the matcher file and apply env substitutions to case statement patterns
+    content = File.read(matcher_file)
+    lines = content.lines
+
+    # Process each line
+    processed_lines = lines.map do |line|
+      # Only process lines that look like case patterns (contain quoted strings)
+      if line =~ /^\s*".*"(?:\)|\|\\)$/
+        # Extract the quoted content, normalize it, and reconstruct the line
+        if line =~ /^(\s*)"(.*)"(\)|\|\\)$/
+          indent = $1
+          pattern = $2
+          suffix = $3
+          normalized = normalize_output_line(pattern)
+          "#{indent}\"#{normalized}\"#{suffix}\n"
+        else
+          line
+        end
+      else
+        line
+      end
+    end
+
+    # Write back the processed content
+    File.write(matcher_file, processed_lines.join)
   end
 
   def build_command_with_setup(when_command, setup_scripts)
@@ -196,12 +240,44 @@ class TestGenerator
 
   def format_expected_error(stderr_file)
     lines = read_stderr_file(stderr_file)
-    lines.each do |line|
-      line.gsub!('`', '\\\`')
-    end
+    lines.map! { |line| normalize_output_line(line) }
     lines.join("\n")
   end
 
+  def normalize_output_line(line)
+    # Normalize whitespace
+    normalized = line.gsub(/\s+/, ' ').strip
+
+    # Replace timestamp patterns (both @zelta_ and _zelta_ prefixes)
+    normalized.gsub!(/@zelta_\d{4}-\d{2}-\d{2}_\d{2}\.\d{2}\.\d{2}/, '@zelta_"*"')
+    normalized.gsub!(/_zelta_\d{4}-\d{2}-\d{2}_\d{2}\.\d{2}\.\d{2}/, '_zelta_"*"')
+
+    # Escape backticks
+    normalized.gsub!('`', '\\\`')
+
+    # Wildcard time and quantity sent
+    if normalized =~ /(\d+[KMGT]? sent, )(\d+ streams)( received in \d+\.\d+ seconds)/
+      stream_count = $2
+      normalized.gsub!(/\d+[KMGT]? sent, \d+ streams received in \d+\.\d+ seconds/,
+                      "* sent, #{stream_count} received in * seconds")
+    end
+
+    # Substitute env var names for values (longest first)
+    # Use a placeholder to prevent already-substituted values from being re-matched
+    placeholder_map = {}
+    @sorted_env_map.each_with_index do |(name, value), idx|
+      placeholder = "__ENV_PLACEHOLDER_#{idx}__"
+      normalized.gsub!(value, placeholder)
+      placeholder_map[placeholder] = "${#{name}}"
+    end
+
+    # Replace placeholders with actual env var references
+    placeholder_map.each do |placeholder, replacement|
+      normalized.gsub!(placeholder, replacement)
+    end
+
+    normalized
+  end
 
   def read_stderr_file(stderr_file)
     File.readlines(stderr_file).map(&:chomp)

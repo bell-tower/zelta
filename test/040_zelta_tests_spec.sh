@@ -1,5 +1,5 @@
 # Auto-generated ShellSpec test file
-# Generated at: 2026-02-08 16:42:17 -0500
+# Generated at: 2026-02-10 02:52:08 -0500
 # Source: 040_zelta_tests_spec
 # WARNING: This file was automatically generated. Manual edits may be lost.
 
@@ -39,7 +39,7 @@ output_for_rotate_after_divergence() {
     case "$normalized" in
         "source is written; snapshotting: @zelta_"*""|\
         "renaming '${SANDBOX_ZELTA_TGT_DS}' to '${SANDBOX_ZELTA_TGT_DS}_start'"|\
-        "to ensure target is up-to-date, run: zelta backup dever@zfsdev:${SANDBOX_ZELTA_SRC_DS} dever@zfsdev:${SANDBOX_ZELTA_TGT_DS}"|\
+        "to ensure target is up-to-date, run: zelta backup ${SANDBOX_ZELTA_SRC_EP} ${SANDBOX_ZELTA_TGT_EP}"|\
         "no source: ${SANDBOX_ZELTA_TGT_DS}/sub1/kid"|\
         "* sent, 10 streams received in * seconds")
         ;;

@@ -1,5 +1,6 @@
 setup_env() {
     DEBUG_MODE=$1
+
     if [ -n "$DEBUG_MODE" ]; then
         . test/runners/setup_debug_env.sh
     else

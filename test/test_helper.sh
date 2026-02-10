@@ -340,7 +340,6 @@ add_tree_delta() {
 	# make changes, we'll call this after snapshotting
 	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub5" || return 1
 	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub5/child1" || return 1
-	src_exec zfs destroy -r "$SANDBOX_ZELTA_SRC_DS/sub3/space\ name" || return 1
 
 	return 0
 }
