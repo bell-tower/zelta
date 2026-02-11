@@ -34,6 +34,19 @@ if [ ! -f "install.sh" ] || [ ! -d ".git" ]; then
     exit 1
 fi
 
+# Preserve commit timestamps to avoid unnecessary reinstallation
+_commit_ts=$(git log -1 --format=%ct 2>/dev/null) || _commit_ts=""
+if [ -n "$_commit_ts" ]; then
+	# Convert Unix timestamp to touch -t format (YYYYMMDDHHMM.SS)
+	# Try BSD date (-r seconds) first, then GNU date (-d @seconds)
+	_touch_ts=$(date -u -r "$_commit_ts" "+%Y%m%d%H%M.%S" 2>/dev/null || \
+	            date -u -d "@$_commit_ts" "+%Y%m%d%H%M.%S" 2>/dev/null || \
+	            echo "")
+	if [ -n "$_touch_ts" ]; then
+		find . -type f -exec touch -t "$_touch_ts" {} +
+	fi
+fi
+
 # Show what we're installing
 echo
 echo "Installing Zelta from commit: $(git rev-parse --short HEAD)"
