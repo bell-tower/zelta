@@ -54,6 +54,13 @@ Zelta 1.0.1_1 (March 2024) is available in the FreeBSD Ports Collection. For the
 pkg install zelta
 ```
 
+### Experimental: One-Shot Install
+```sh
+curl -fsSL https://raw.githubusercontent.com/bellhyve/zelta/main/contrib/install-from-git.sh | sudo sh
+```
+
+**Note:** This is experimental. For production use, we recommend cloning the repository and reviewing `install.sh` before running it.
+
 ---
 
 ## Quickstart: Developer Workflow
