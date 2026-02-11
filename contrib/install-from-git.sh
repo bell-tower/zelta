@@ -68,28 +68,6 @@ echo
 sh install.sh "$@"
 _exit=$?
 
-# Determine expected installation location (matching install.sh logic)
-if [ -n "${ZELTA_BIN:-}" ]; then
-	_expected_bin="$ZELTA_BIN"
-elif [ "$(id -u)" -eq 0 ]; then
-	_expected_bin="/usr/local/bin"
-else
-	_expected_bin="$HOME/bin"
-fi
-
-# Verify the installed zelta is first in PATH
-_installed_zelta="$_expected_bin/zelta"
-_current_zelta=$(command -v zelta 2>/dev/null || echo "")
-
-if [ "$_exit" -eq 0 ] && [ -n "$_current_zelta" ] && [ "$_current_zelta" != "$_installed_zelta" ]; then
-	echo
-	echo "Warning: A different 'zelta' appears first in PATH."
-	echo "Installed: $_installed_zelta"
-	echo "Found:     $_current_zelta"
-	echo "To use the newly installed version, ensure $_expected_bin precedes other locations in PATH."
-	echo
-fi
-
 # Cleanup
 cd /
 rm -rf "$WORKDIR"
