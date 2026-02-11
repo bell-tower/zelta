@@ -8,7 +8,19 @@
 set -e
 
 REPO="https://github.com/bellhyve/zelta.git"
-BRANCH="${1:-main}"
+# Parse branch argument: supports 'main', '--branch=main', or '-b=main'
+BRANCH="main"
+while [ $# -gt 0 ]; do
+	case "$1" in
+		--branch=*|-b=*) 
+			BRANCH="${1#*=}" 
+			shift
+			;;
+		*)
+			break
+			;;
+	esac
+done
 TMPDIR="${TMPDIR:-/tmp}"
 WORKDIR="$TMPDIR/zelta-install-$$"
 
@@ -55,6 +67,28 @@ echo
 # Run the real installer
 sh install.sh "$@"
 _exit=$?
+
+# Determine expected installation location (matching install.sh logic)
+if [ -n "${ZELTA_BIN:-}" ]; then
+	_expected_bin="$ZELTA_BIN"
+elif [ "$(id -u)" -eq 0 ]; then
+	_expected_bin="/usr/local/bin"
+else
+	_expected_bin="$HOME/bin"
+fi
+
+# Verify the installed zelta is first in PATH
+_installed_zelta="$_expected_bin/zelta"
+_current_zelta=$(command -v zelta 2>/dev/null || echo "")
+
+if [ "$_exit" -eq 0 ] && [ -n "$_current_zelta" ] && [ "$_current_zelta" != "$_installed_zelta" ]; then
+	echo
+	echo "Warning: A different 'zelta' appears first in PATH."
+	echo "Installed: $_installed_zelta"
+	echo "Found:     $_current_zelta"
+	echo "To use the newly installed version, ensure $_expected_bin precedes other locations in PATH."
+	echo
+fi
 
 # Cleanup
 cd /
