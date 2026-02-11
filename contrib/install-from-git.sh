@@ -7,7 +7,7 @@
 
 set -e
 
-REPO="https://github.com/bellhyve/zelta.git"
+REPO="https://github.com/bell-tower/zelta.git"
 # Parse branch argument: supports 'main', '--branch=main', or '-b=main'
 BRANCH="main"
 while [ $# -gt 0 ]; do
@@ -64,9 +64,34 @@ echo
 echo "Installing Zelta from commit: $(git rev-parse --short HEAD)"
 echo
 
-# Run the real installer
-sh install.sh "$@"
+# Run the real installer (suppress its user guidance)
+ZELTA_QUIET=1 sh install.sh "$@"
 _exit=$?
+
+# Post-installation guidance for non-root users
+if [ "$(id -u)" -ne 0 ] && [ -z "$ZELTA_QUIET" ]; then
+	echo
+	echo "=========================================================="
+	echo "INSTALLATION COMPLETE - ACTION REQUIRED"
+	echo "=========================================================="
+	echo
+	echo "Zelta has been installed to user directories."
+	echo "To make zelta available in this and future shell sessions,"
+	echo "add the following to your shell startup file"
+	echo "(~/.bashrc, ~/.zshrc, ~/.profile, etc.):"
+	echo
+	echo "    # Zelta configuration"
+	echo "    export ZELTA_BIN=\"${ZELTA_BIN:-$HOME/bin}\""
+	echo "    export ZELTA_SHARE=\"${ZELTA_SHARE:-$HOME/.local/share/zelta}\""
+	echo "    export ZELTA_ETC=\"${ZELTA_ETC:-$HOME/.config/zelta}\""
+	echo "    export ZELTA_DOC=\"${ZELTA_DOC:-$HOME/.local/share/zelta/doc}\""
+	echo "    export PATH=\"\$ZELTA_BIN:\$PATH\""
+	echo
+	echo "Then reload your configuration: source ~/.bashrc"
+	echo "(or the appropriate file for your shell)"
+	echo "=========================================================="
+	echo
+fi
 
 # Cleanup
 cd /

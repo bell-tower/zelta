@@ -15,27 +15,6 @@ elif [ -z "$ZELTA_BIN" ] || [ -z "$ZELTA_SHARE" ] || [ -z "$ZELTA_ETC" ] || [ -z
 	: ${ZELTA_SHARE:="$HOME/.local/share/zelta"}
 	: ${ZELTA_ETC:="$HOME/.config/zelta"}
 	: ${ZELTA_DOC:="$ZELTA_SHARE/doc"}
-	if [ -t 0 ]; then
-		echo To install Zelta for this user account:
-		echo
-		echo 1. Set the following environment variables in your startup script
-		echo    or export them with your desired values:
-		echo
-		echo export ZELTA_BIN=\"$ZELTA_BIN\"
-		echo export ZELTA_SHARE=\"$ZELTA_SHARE\"
-		echo export ZELTA_ETC=\"$ZELTA_ETC\"
-		echo export ZELTA_DOC=\"$ZELTA_DOC\"
-		echo
-		echo 2. Ensure that \"$ZELTA_BIN\" is in PATH environment variable.
-		echo 
-		echo Note: If you prefer a global installation, cancel this installation
-		echo and rerun this command as root, e.g. \`sudo install.sh\`.
-		echo
-		echo Proceed with installation?
-		echo
-		echo Press Control-C to stop or Return to install using the above paths.
-		read _wait
-	fi
 fi
 
 : ${ZELTA_CONF:="$ZELTA_ETC/zelta.conf"}
@@ -89,15 +68,24 @@ fi
 
 # Check if installed zelta will be used
 _existing_zelta=$(command -v zelta 2>/dev/null || echo "")
-if [ -z "$_existing_zelta" ]; then
-	echo
-	echo "Warning: 'zelta' not found in PATH."
-	echo "Add this to your shell startup file (~/.zshrc, ~/.profile, etc.):"
-	echo "    export PATH=\"\$PATH:$ZELTA_BIN\""
-elif [ "$_existing_zelta" != "$ZELTA" ]; then
+if [ -n "$_existing_zelta" ] && [ "$_existing_zelta" != "$ZELTA" ]; then
 	echo
 	echo "Warning: A different 'zelta' appears first in PATH."
 	echo "Installed: $ZELTA"
 	echo "Found:     $_existing_zelta"
 	echo "To use the newly installed version, ensure $ZELTA_BIN precedes '$(dirname "$_existing_zelta")' in PATH."
+fi
+
+# Post-installation summary for non-root users
+if [ "$(id -u)" -ne 0 ] && [ -z "$ZELTA_QUIET" ]; then
+	echo
+	echo "Zelta installed to user directories."
+	echo "To use zelta, ensure these are set in your shell startup file:"
+	echo
+	echo "    export ZELTA_BIN=\"$ZELTA_BIN\""
+	echo "    export ZELTA_SHARE=\"$ZELTA_SHARE\""
+	echo "    export ZELTA_ETC=\"$ZELTA_ETC\""
+	echo "    export ZELTA_DOC=\"$ZELTA_DOC\""
+	echo "    export PATH=\"\$ZELTA_BIN:\$PATH\""
+	echo
 fi
