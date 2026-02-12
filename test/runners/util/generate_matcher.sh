@@ -52,7 +52,6 @@ if [ ! -s "$OUT_FL" ]; then
         exit 1
     else
         printf "\n ⚠️  Command produced no output (skipping matcher generation)\n"
-        #set +x
         exit 0
     fi
 fi
@@ -60,7 +59,6 @@ fi
 # Skip matcher generation if allow_no_output is true
 if [ "$allow_no_output" = "true" ]; then
     printf "\n ℹ️  Skipping matcher generation (allow_no_output=true)\n"
-    #set +x
     exit 0
 fi
 
@@ -73,4 +71,3 @@ else
     printf "\n ❌ Matcher generation failed!\n"
     exit 1
 fi
-#set +x

@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Generate tests for 40,50,60 examples
+
 if ! ./generate_test.sh \
  040_zelta_tests_spec.sh \
  test_defs/040_zelta_tests.yml \

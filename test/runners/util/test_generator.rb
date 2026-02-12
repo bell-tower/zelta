@@ -1,6 +1,10 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# Manage generation of ShellSpec test files from YAML configuration
+
+
+
 require 'English'
 require 'json-schema'
 require 'yaml'

@@ -3,6 +3,7 @@
 # Debug environment setup
 #   To facilitate creating and manually shellspec tests, and debugging existing tests
 #   use the last spec installed zelta version
+#   if no previous zelta install is found in /tmp, show user how to create one
 
 # find the last installed version of zelta installed by shellspec
 last_tmp_installed_zelta_ver=$(ls -1d /tmp/zelta* | tail -1)
@@ -24,6 +25,8 @@ export SANDBOX_ZELTA_TMP_DIR="$last_tmp_installed_zelta_ver"
 # use discovered process number
 export SANDBOX_ZELTA_PROCNUM="$last_tmp_process_number"
 
+# standardized shellspec run environment depends on these env vars
+# we use the last installed zelta and dbg area for shellspec
 export ZELTA_BIN="$SANDBOX_ZELTA_TMP_DIR/bin"
 export ZELTA_SHARE="$SANDBOX_ZELTA_TMP_DIR/share"
 export ZELTA_ETC="$SANDBOX_ZELTA_TMP_DIR/etc"
@@ -31,13 +34,13 @@ export ZELTA_DOC="$SANDBOX_ZELTA_TMP_DIR/man"
 export SHELLSPEC_TMPBASE=~/tmp/dbg_shellspecs
 mkdir -p $SHELLSPEC_TMPBASE
 
-#set +x
-
 # add the tmp zelta bin if not already on path
 if ! echo ":$PATH:" | grep -q ":$ZELTA_BIN:"; then
   export PATH="$ZELTA_BIN:$PATH"
 fi
 
+# SHELLSPEC_PROJECT_ROOT is not currently being used in the zelta test env setup
+# if that changes we'll need to address it here when we are creating a custom debug environment
 echo "*** NOTE: SHELLSPEC_PROJECT_ROOT is not set, make sure it's not used!"
 
 printf " ✅ %s\n\n" "using zelta $last_tmp_installed_zelta_ver with process number $last_tmp_process_number"

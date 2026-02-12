@@ -1,4 +1,5 @@
-#set -x
+# Modify this file to configure your test pools, datasets and endpoints
+
 # pools
 export SANDBOX_ZELTA_SRC_POOL=apool
 export SANDBOX_ZELTA_TGT_POOL=bpool
@@ -8,13 +9,7 @@ export SANDBOX_ZELTA_SRC_DS=apool/treetop
 export SANDBOX_ZELTA_TGT_DS=bpool/backups
 
 # remotes setup
-#export SANDBOX_ZELTA_SRC_REMOTE=dever@zfsdev  # works from macOS
-#export SANDBOX_ZELTA_SRC_REMOTE=localhost # works on Ubuntu
-
-#TODO: confirm if FreeBSD works
-#export SANDBOX_ZELTA_SRC_REMOTE=dever@fzfsdev  # FreeBSD source
+#   * leave these undefined if you're running locally
+#   * the endpoints are defined automatically and are REMOTE + DS
 export SANDBOX_ZELTA_SRC_REMOTE=dever@zfsdev # Ubuntu source
 export SANDBOX_ZELTA_TGT_REMOTE=dever@zfsdev # Ubuntu remote
-#unset SANDBOX_ZELTA_SRC_REMOTE
-#unset SANDBOX_ZELTA_TGT_REMOTE
-#set +x
