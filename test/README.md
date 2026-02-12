@@ -1,9 +1,17 @@
 # Running tests with shellspec
 
 - after installing `shellspec`
-- cd repo root for `zelta`
-- `shellspec`
- 
+
+- define your sandbox environment variables
+   - source an environment setup script 
+     - modify or create a new env setup script, see [test/runners/env/test_env.sh](runners/env/test_env.sh)
+   - or set the environment variables directly in your shell session
+   - >NOTE: you can run a basic smoke test without setting any environment variables
+- run `shellspec`
+   - cd to the repo root for `zelta`
+   - `shellspec`
+
+### If testing remotely:
 - Setup your test user on your source and target machines
   - update sudoers, for example on Linux
     - create /etc/sudoers.d/zelta-tester
@@ -16,30 +24,3 @@
    - TODO: confirm if usr/bin/mount *, /usr/bin/mkdir * are needed
  
   - setup zfs allow on your source and target machines will be set up automatically for your test pools
-
-## TODOS
-
-#### done
-- backup
-- match
-- rotate
-
-#### to add
-- snapshot
-- revert
-- clone 
-  - introduce NEW_CLONE=new
-  - todo: clone to new place ($SRC_DS/$NEW_CLONE)
-  - todo: rotate from clone
-
-#### next release:
-- prune
-
-#### Notes:
--  snapshot (meta data capture)
-   - zfs snapshot / just run zelta snapshot and check output
-   - special thing for snapshot:
-     - `zelta snapshot remote:pool/dataset@my-snap-name`
-     - `zelta snapshot --snap-name="my-snap-name" remote:pool/dataset`
-- sync (just -i, don't worry about)
-- wait on: policy (consider repeating test with policy)
