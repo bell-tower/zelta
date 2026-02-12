@@ -15,23 +15,23 @@ This directory provides:
 test/runners/
 ├── README.md                     # This file
 ├── doc/                          # Documentation
-│   └── README_AliasHelpers.md   # Shell aliases for test workflows
+│   └── README_AliasHelpers.md    # Shell aliases for test workflows
 │
 ├── env/                          # Environment setup
-│   ├── test_env.sh              # Configure pools, datasets, remotes
-│   ├── helpers.sh               # Common functions (setup_env, run_it, etc.)
-│   ├── reset_env.sh             # Reset environment variables
-│   ├── setup_debug_env.sh       # Debug environment setup
-│   ├── set_reuse_tmp_env.sh     # Reuse existing /tmp/zelta* install
+│   ├── test_env.sh               # Configure pools, datasets, remotes
+│   ├── helpers.sh                # Common functions (setup_env, run_it, etc.)
+│   ├── reset_env.sh              # Reset environment variables
+│   ├── setup_debug_env.sh        # Debug environment setup
+│   ├── set_reuse_tmp_env.sh      # Reuse existing /tmp/zelta* install
 │   └── test_generator_cleanup.sh # Clean up after test generation
 │
 └── test_generation/              # Automated test generation (see below)
-    ├── README.md                # Detailed test generation docs
-    ├── bin/                     # Entry point scripts
-    ├── config/                  # YAML test definitions
-    ├── lib/                     # Core implementation
-    ├── scripts/                 # Utilities (shell, AWK)
-    └── tmp/                     # Generated output
+    ├── README.md                 # Detailed test generation docs
+    ├── bin/                      # Entry point scripts
+    ├── config/                   # YAML test definitions
+    ├── lib/                      # Core implementation
+    ├── scripts/                  # Utilities (shell, AWK)
+    └── tmp/                      # Generated output
 ```
 
 ## Quick Start
@@ -257,13 +257,14 @@ Common aliases:
 ### Test Execution Flow
 
 ```
+Manually setup up your SANDBOX env vars
+use . env/test_env.sh or equivalent
+    ↓
 shellspec
     ↓
 test/*_spec.sh (ShellSpec tests)
     ↓
 test/test_helper.sh (setup)
-    ↓
-Sources env/test_env.sh
     ↓
 Creates/configures test pools
     ↓

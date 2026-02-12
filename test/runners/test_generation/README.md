@@ -15,7 +15,7 @@ This system generates complete ShellSpec test files by:
 ```
 test_generation/
 ├── bin/                          # Entry point scripts
-│   ├── generate_new_tests.sh    # Generate multiple tests (040, 050, 060)
+│   ├── generate_new_tests.sh     # Generate multiple tests (040, 050, 060)
 │   └── debug_gen.sh              # Debug test generation
 ├── config/
 │   ├── test_defs/                # YAML test definitions
@@ -25,7 +25,7 @@ test_generation/
 │   └── test_config_schema.yml    # YAML validation schema
 ├── lib/
 │   ├── ruby/                     # Core Ruby implementation
-│   │   ├── test_generator.rb    # Main test generator class
+│   │   ├── test_generator.rb     # Main test generator class
 │   │   ├── sys_exec.rb           # Command execution with timeout
 │   │   ├── placeholders.rb       # Variable substitution
 │   │   └── .rubocop.yml          # Ruby style config
