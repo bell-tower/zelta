@@ -3,7 +3,7 @@
 Describe 'Zelta no-op command checks'
     Describe 'zelta command'
         It 'is executable'
-            When run command command -v zelta
+            When run command which zelta
             The status should be success
             The output should include 'zelta'
         End
