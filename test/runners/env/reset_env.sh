@@ -4,4 +4,4 @@
 echo "unsetting SANDBOX_ZELTA_TMP_DIR to forces test_helper.sh to re-evaluate ZELTA setup"
 unset SANDBOX_ZELTA_TMP_DIR # forces test_helper.sh to re-evaluate ZELTA setup
 
-. ./test/runners/test_env.sh
+. ./test/runners/env/test_env.sh

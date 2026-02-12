@@ -5,7 +5,6 @@
 .*
 doc/man?
 tmp
-spec/tmp
 hide.*
 *~
 \#*#
@@ -14,3 +13,4 @@ A*d
 .#*
 retired/
 logs
+log

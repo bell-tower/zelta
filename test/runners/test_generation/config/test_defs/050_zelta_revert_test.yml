@@ -11,7 +11,7 @@ test_list:
 
   - test_name: add_and_remove_src_datasets
     setup_scripts:
-      - "../../test_helper.sh"
+      - "test/test_helper.sh"
     allow_no_output: true
     it_desc: add and remove src datasets - %{when_command}
     when_command: add_tree_delta

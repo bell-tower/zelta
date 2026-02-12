@@ -11,14 +11,14 @@ setup_tree() {
 
    cd "$REPO_ROOT" || exit 1
    . ./test/test_helper.sh
-   . ./test/runners/helpers.sh
+   . ./test/runners/env/helpers.sh
    setup_env "1"      # setup debug environment
    clean_ds_and_pools # reset tree
 
     if shellspec $trace_options --pattern "$setup_specs"; then
-        printf "\n ✅ setup succeeded for specs: %s\n" "$SPECS"
+        printf "\n ✅ setup succeeded for specs: %s\n" "$setup_specs"
     else
-        printf "\n ❌ setup failed for specs: %s\n" "$SPECS"
+        printf "\n ❌ setup failed for specs: %s\n" "$setup_specs"
         exit 1
     fi
 }

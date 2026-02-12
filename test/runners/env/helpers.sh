@@ -9,11 +9,11 @@ setup_env() {
     DEBUG_MODE=$1
 
     if [ -n "$DEBUG_MODE" ]; then
-        . test/runners/setup_debug_env.sh
+        . test/runners/env/setup_debug_env.sh
     else
         printf '%s\n' "--> Normal shellspec Run"
-        . test/runners/reset_env.sh   # reset the env, use test_helper.sh version
-        . test/runners/test_env.sh    # set dataset, pools and remote env vars
+        . test/runners/env/reset_env.sh   # reset the env, use test_helper.sh version
+        . test/runners/env/test_env.sh    # set dataset, pools and remote env vars
         # on normal run shellspec will automatically run test/test_helper.sh
     fi
 }

@@ -14,18 +14,17 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 
 # standard locations under test
 RUNNERS_DIR="$REPO_ROOT/test/runners"
-UTIL_DIR="$REPO_ROOT/test/runners/util"
-TEST_GEN_DIR="$REPO_ROOT/test/runners/util/test_generation"
+TEST_GEN_DIR="$REPO_ROOT/test/runners/test_generation"
 
 # tree setup utility
-. "$TEST_GEN_DIR/setup_tree.sh"
+. "$TEST_GEN_DIR/lib/orchestration/setup_tree.sh"
 
 # prepare the zfs tree with the state represented by running the following examples/tests
 SPECS="test/01*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/040_*_spec.sh"
 
 # use the directory where your generated test is created
-# by default we're using a temp directory off of test/runners/util
-NEW_SPEC"$UTIL_DIR/tmp/050_zelta_revert_spec.sh"
+# by default we're using a temp directory off of test/runners/test_generation
+NEW_SPEC="$TEST_GEN_DIR/tmp/050_zelta_revert_spec.sh"
 echo "confirming new spec: {$NEW_SPEC}"
 
 if setup_tree "$SPECS"; then
@@ -36,7 +35,7 @@ else
 fi
 
 #
-. "$RUNNERS_DIR/setup_debug_env.sh"
+. "$RUNNERS_DIR/env/setup_debug_env.sh"
 
 # show a detailed trace of the commands you are executing in your new test
 TRACE_OPTIONS="--xtrace --shell /opt/homebrew/bin/bash"

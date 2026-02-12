@@ -3,26 +3,32 @@
 
 # Manage generation of ShellSpec test files from YAML configuration
 
-
-
 require 'English'
 require 'json-schema'
 require 'yaml'
 require 'fileutils'
 require 'time'
-require_relative 'lib/placeholders'
-require_relative 'lib/sys_exec'
+require_relative 'placeholders'
+require_relative 'sys_exec'
 
 # TestGenerator - Generates ShellSpec test files from YAML configuration
 class TestGenerator
-  GENERATE_MATCHER_SH_SCRIPT = './generate_matcher.sh'
+  REPO_ROOT = `git rev-parse --show-toplevel`.strip
+  TEST_GEN_DIR = File.expand_path(File.join(__dir__, '..', '..'))
+  GENERATE_MATCHER_SH_SCRIPT = File.join(TEST_GEN_DIR, 'scripts', 'sh', 'generate_matcher.sh')
+
+  # TODO: determine if additional defaults are needed, as more tests are added, we may need to update this
   DEFAULT_ENV_VAR_NAMES = 'SANDBOX_ZELTA_TGT_DS:SANDBOX_ZELTA_SRC_DS:SANDBOX_ZELTA_TGT_EP:SANDBOX_ZELTA_SRC_EP'
-  private_constant :GENERATE_MATCHER_SH_SCRIPT
+
+  private_constant :REPO_ROOT, :TEST_GEN_DIR, :GENERATE_MATCHER_SH_SCRIPT
 
   attr_reader :config, :output_dir, :shellspec_name, :describe_desc, :test_list, :skip_if_list,
               :matcher_files, :wip_file_path, :final_file_path, :env_var_names, :sorted_env_map
 
   def initialize(yaml_file_path, env_var_names = DEFAULT_ENV_VAR_NAMES)
+    # Resolve path relative to this file's directory if it's a relative path
+    yaml_file_path = File.expand_path(yaml_file_path, __dir__) unless yaml_file_path.start_with?('/')
+
     raise "YAML file not found: #{yaml_file_path}" unless File.exist?(yaml_file_path)
 
     @config = YAML.load_file(yaml_file_path)
@@ -30,7 +36,11 @@ class TestGenerator
 
     @shellspec_name = @config['shellspec_name']
     @describe_desc = @config['describe_desc']
-    @output_dir = @config['output_dir']
+
+    # Resolve output_dir relative to test_generation directory
+    output_dir = @config['output_dir']
+    @output_dir = output_dir.start_with?('/') ? output_dir : File.join(TEST_GEN_DIR, output_dir)
+
     @test_list = @config['test_list'] || []
     @skip_if_list = @config['skip_if_list'] || []
     @matcher_files = []
@@ -68,7 +78,7 @@ class TestGenerator
     "output_for_#{test_name}"
   end
 
-  def validate_config!(schema_path = 'test_config_schema.yml')
+  def validate_config!(schema_path = File.join(TEST_GEN_DIR, 'config', 'test_config_schema.yml'))
     schema = YAML.load_file(schema_path)
     JSON::Validator.validate!(schema, @config)
   end
@@ -128,13 +138,13 @@ class TestGenerator
     # Build command with optional setup scripts
     full_command = build_command_with_setup(when_command, setup_scripts)
 
-    # Add env var names and allow_no_output flag
+    # Add allow_no_output flag
     allow_no_output_flag = allow_no_output ? "true" : "false"
 
-    cmd = "#{matcher_script} \"#{full_command}\" #{matcher_function_name} #{@output_dir} #{@env_var_names} #{allow_no_output_flag}"
+    cmd = "#{matcher_script} \"#{full_command}\" #{matcher_function_name} #{@output_dir} #{allow_no_output_flag}"
     SysExec.run(cmd, timeout: 10)
 
-    unless allow_no_output then
+    unless allow_no_output
       # Track the generated matcher file
       func_name = matcher_func_name(test_name)
       matcher_file = File.join(@output_dir, func_name, "#{func_name}.sh")
@@ -179,8 +189,17 @@ class TestGenerator
   def build_command_with_setup(when_command, setup_scripts)
     return when_command if setup_scripts.empty?
 
+    # Resolve relative script paths to absolute paths relative to repo root
+    resolved_scripts = setup_scripts.map do |script|
+      if script.start_with?('/')
+        script
+      else
+        File.join(REPO_ROOT, script)
+      end
+    end
+
     # Build source commands for each setup script (using . for POSIX compatibility)
-    source_cmds = setup_scripts.map { |script| ". #{script}" }
+    source_cmds = resolved_scripts.map { |script| ". #{script}" }
 
     # Combine all source commands with the actual command
     "#{source_cmds.join(' && ')} && #{when_command}"
@@ -234,7 +253,6 @@ class TestGenerator
   # }
   def v2_format_expected_error(stderr_file)
     lines = read_stderr_file(stderr_file)
-    result = "    expected_error=$(%text\n"
     result = "    expected_error() { %text\n"
     lines.each do |line|
       result += "    #|#{line}\n"
@@ -330,6 +348,7 @@ class TestGenerator
     puts "\nFinal ShellSpec Test File:"
     puts "  Location: #{@final_file_path}"
     puts '=' * 60
+    puts "__SHELLSPEC_NAME__:#{@shellspec_name}"
   end
 end
 

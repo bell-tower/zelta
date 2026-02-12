@@ -11,6 +11,6 @@ test_list:
 
   - test_name: zfs_list_for_clone
     setup_scripts:
-      - "../../test_helper.sh"
+      - "test/test_helper.sh"
     it_desc: verifies the clone - %{when_command}
     when_command: src_exec zfs list -ro name,origin $SANDBOX_ZELTA_SRC_DS/copy_of_sub2
