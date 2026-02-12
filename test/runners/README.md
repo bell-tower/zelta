@@ -248,9 +248,15 @@ For productivity, source the alias helpers:
 Or add to your shell rc file. See [doc/README_AliasHelpers.md](doc/README_AliasHelpers.md) for available aliases.
 
 Common aliases:
-- `zrenv` - Reset environment
-- `zrdbg` - Setup debug environment
-- `zcd` - Change to repo root
+- `ztenv`   - source sandbox env from `test/runners/env/test_env.sh`
+- `zdbgenv` - Setup debug environment
+- `zcd`     - Change to repo root
+- `zspect`  - Run shellspec tests with tracing
+- `zspecd`  - Run shellspec tests with more detailed output
+- `zclean`  - Remove test pools and datasets, clean slate
+   - use `zclean` to reset env after test generation
+   - use `ztenv`  to source sandbox env vars
+   - now you can run `shellspec` normally
 
 ## Architecture
 
