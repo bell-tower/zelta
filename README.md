@@ -55,11 +55,10 @@ pkg install zelta
 ```
 
 ### Experimental: One-Shot Install
+The following script will `git clone` Zelta from the main branch and run the installer. For non-root installations, follow the instructions to add the required environment variables.
 ```sh
-curl -fsSL https://raw.githubusercontent.com/bellhyve/zelta/main/contrib/install-from-git.sh | sudo sh
+curl -fsSL https://raw.githubusercontent.com/bellhyve/zelta/main/contrib/install-from-git.sh | sh
 ```
-
-**Note:** This is experimental. For production use, we recommend cloning the repository and reviewing `install.sh` before running it.
 
 ---
 
