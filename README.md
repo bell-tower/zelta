@@ -55,10 +55,16 @@ pkg install zelta
 ```
 
 ### Experimental: One-Shot Install
-The following script will `git clone` Zelta from the main branch and run the installer. For non-root installations, follow the instructions to add the required environment variables.
+
+The following command clones Zelta from the `main` branch and launches the installer. Run this as a personal or backup user for a local, non-root installation. If you prefer a system-wide installation, run the command as root or via `sudo/doas`.
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/bellhyve/zelta/main/contrib/install-from-git.sh | sh
 ```
+
+The installer will detect your privileges and guide you through adding the necessary environment variables to your shell profile.
+
+*Security Note: As with any script piped from the internet, we encourage you to [inspect the installer source](https://github.com/bellhyve/zelta/blob/main/contrib/install-from-git.sh) before execution.*
 
 ---
 
@@ -187,11 +193,11 @@ For other inquiries including business questions, you can reach the Zelta team a
 
 ### Conference Talks
 
-**BSDCan 2024: Zelta: A Safe and Powerful Approach to ZFS Replication**  
-By Daniel J. Bell  
+**BSDCan 2024: Zelta: A Safe and Powerful Approach to ZFS Replication** 
+By Daniel J. Bell 
 [Watch on YouTube](https://www.youtube.com/watch?v=_nmgQTs8wgE)
 
-**OpenZFS Summit 2025: Responsible Replication with Zelta**  
+**OpenZFS Summit 2025: Responsible Replication with Zelta** 
 [Watch on YouTube](https://www.youtube.com/watch?v=G3weooQqcXw)
 
 ### Bell Tower Services
