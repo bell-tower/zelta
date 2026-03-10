@@ -13,14 +13,25 @@
 
 ### If testing remotely:
 - Setup your test user on your source and target machines
-  - update sudoers, for example on Linux
+  - update sudoers
     - create /etc/sudoers.d/zelta-tester
-    ```
-    # Allow (mytestuser) to run ZFS commands without password for zelta testing
-    # NOTE: This is for test environments only - DO NOT use in production
-    # CAUTION: The wildcards show intent only, with globbing other commands may be allowed as well
-    (mytestuser) ALL=(ALL) NOPASSWD: /usr/bin/dd *, /usr/bin/rm -f /tmp/*, /usr/bin/truncate *, /usr/sbin/zpool *, /usr/sbin/zfs *    
-    ```
+    - add this comment to the file
+      ```
+      # Allow (mytestuser) to run ZFS commands without password for zelta testing
+      # NOTE: This is for test environments only - DO NOT use in production
+      # CAUTION: The wildcards show intent only, with globbing other commands may be allowed as well
+      ```
+  
+    - Ubuntu entry
+      ```
+      (mytestuser) ALL=(ALL) NOPASSWD: /usr/bin/dd *, /usr/bin/rm -f /tmp/*, /usr/bin/truncate *, /usr/sbin/zpool *, /usr/sbin/zfs *
+      ```
+  
+    - FreeBSD entry
+      ```
+      (mytestuser) ALL=(ALL) NOPASSWD: /bin/dd *, /bin/rm -f /tmp/*, /usr/bin/truncate *, /sbin/zpool *, /sbin/zfs *
+      ```
+  
    - TODO: confirm if usr/bin/mount *, /usr/bin/mkdir * are needed
  
   - setup zfs allow on your source and target machines will be set up automatically for your test pools
