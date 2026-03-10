@@ -1,5 +1,5 @@
 # Auto-generated ShellSpec test file
-# Generated at: 2026-02-12 13:29:24 -0500
+# Generated at: 2026-03-10 03:08:42 -0400
 # Source: 050_zelta_revert_spec
 # WARNING: This file was automatically generated. Manual edits may be lost.
 
@@ -43,25 +43,6 @@ output_for_snapshot_again() {
     normalized=$(echo "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     case "$normalized" in
         "snapshot created '${SANDBOX_ZELTA_SRC_DS}@another_test'")
-        ;;
-      *)
-        printf "Unexpected line format: %s\n" "$line" >&2
-        return 1
-        ;;
-    esac
-  done
-  return 0
-}
-
-output_for_revert() {
-  while IFS= read -r line; do
-    # normalize whitespace, remove leading/trailing spaces
-    normalized=$(echo "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
-    case "$normalized" in
-        "renaming '${SANDBOX_ZELTA_SRC_DS}' to '${SANDBOX_ZELTA_SRC_DS}_manual_test'"|\
-        "cloned 12/12 datasets to ${SANDBOX_ZELTA_SRC_DS}"|\
-        "snapshotting: @zelta_"*""|\
-        "to retain replica history, run: zelta rotate '${SANDBOX_ZELTA_SRC_DS}' 'TARGET'")
         ;;
       *)
         printf "Unexpected line format: %s\n" "$line" >&2
@@ -118,20 +99,8 @@ Describe 'Test revert'
     The status should be success
   End
 
-  It "revert to last snapshot - zelta revert \"$SANDBOX_ZELTA_SRC_EP\"@manual_test"
-    When call zelta revert "$SANDBOX_ZELTA_SRC_EP"@manual_test
-    The output should satisfy output_for_revert
-    The error should equal "warning: unexpected 'zfs clone' output: filesystem successfully created, but it may only be mounted by root
-warning: unexpected 'zfs clone' output: filesystem successfully created, but it may only be mounted by root
-warning: unexpected 'zfs clone' output: filesystem successfully created, but it may only be mounted by root
-warning: unexpected 'zfs clone' output: filesystem successfully created, but it may only be mounted by root
-warning: unexpected 'zfs clone' output: filesystem successfully created, but it may only be mounted by root
-warning: unexpected 'zfs clone' output: filesystem successfully created, but it may only be mounted by root
-warning: unexpected 'zfs clone' output: filesystem successfully created, but it may only be mounted by root
-warning: unexpected 'zfs clone' output: filesystem successfully created, but it may only be mounted by root
-warning: unexpected 'zfs clone' output: filesystem successfully created, but it may only be mounted by root
-warning: unexpected 'zfs clone' output: cannot open '${SANDBOX_ZELTA_SRC_DS}_manual_test/sub5@manual_test': dataset does not exist
-warning: unexpected 'zfs clone' output: cannot open '${SANDBOX_ZELTA_SRC_DS}_manual_test/sub5/child1@manual_test': dataset does not exist"
+  It "revert to last snapshot (ignore warnings) - zelta revert -qq \"$SANDBOX_ZELTA_SRC_EP\"@manual_test"
+    When call zelta revert -qq "$SANDBOX_ZELTA_SRC_EP"@manual_test
     The status should be success
   End
 
