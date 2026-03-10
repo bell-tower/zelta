@@ -1,7 +1,6 @@
-#!/bin/sh
-
+#!/usr/bin/env bash
 # Get the directory where this script is located
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 TEST_GEN_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 CONFIG_DIR="$TEST_GEN_DIR/config/test_defs"
 GENERATE_TEST="$TEST_GEN_DIR/lib/orchestration/generate_test.sh"
@@ -23,7 +22,6 @@ if ! "$GENERATE_TEST" \
   printf "\n ❌ Failed to generate 050 test\n"
   exit 1
 fi
-
 
 if ! "$GENERATE_TEST" \
  "$CONFIG_DIR/060_zelta_clone_test.yml" \
