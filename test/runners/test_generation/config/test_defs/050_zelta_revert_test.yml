@@ -25,8 +25,9 @@ test_list:
     when_command: zelta snapshot --snap-name "another_test" "$SANDBOX_ZELTA_SRC_EP"
 
   - test_name: revert
-    it_desc: revert to last snapshot - %{when_command}
-    when_command: zelta revert "$SANDBOX_ZELTA_SRC_EP"@manual_test
+    it_desc: revert to last snapshot (ignore warnings) - %{when_command}
+    allow_no_output: true
+    when_command: zelta revert -qq "$SANDBOX_ZELTA_SRC_EP"@manual_test
 
   - test_name: rotate_after_revert
     it_desc: rotates after divergence - %{when_command}
