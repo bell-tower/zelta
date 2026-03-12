@@ -1,5 +1,5 @@
 # Auto-generated ShellSpec test file
-# Generated at: 2026-03-10 23:58:06 -0400
+# Generated at: 2026-03-12 02:47:09 -0400
 # Source: 080_zelta_policy_spec
 # WARNING: This file was automatically generated. Manual edits may be lost.
 
@@ -23,8 +23,6 @@ output_for_policy_check() {
 Describe 'Test zelta policy'
   Skip if 'SANDBOX_ZELTA_SRC_DS undefined' test -z "$SANDBOX_ZELTA_SRC_DS"
   Skip if 'SANDBOX_ZELTA_TGT_DS undefined' test -z "$SANDBOX_ZELTA_TGT_DS"
-  #Skip if 'SANDBOX_ZELTA_SRC_REMOTE undefined' test -z "$SANDBOX_ZELTA_SRC_REMOTE"
-  #Skip if 'SANDBOX_ZELTA_TGT_REMOTE undefined' test -z "$SANDBOX_ZELTA_TGT_REMOTE"
 
   It "generate zelta policy - ./test/runners/test_generation/bin/generate_zelta_policy_config.sh"
     When call ./test/runners/test_generation/bin/generate_zelta_policy_config.sh

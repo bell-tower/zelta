@@ -1,13 +1,5 @@
 #!/usr/bin/env bash
 
-# Check if arguments were provided
-if [ $# -lt 1 ] || [ $# -gt 2 ]; then
-    echo "Invalid number of arguments!"
-    echo "Usage: $0 'pattern specs list' 'selector specs list"
-    return 1
-fi
-
-#VAR="${VAR-default_value}"
 # *** only source this script in bash, do not execute it
 
 # This is a helper for setting up a test environment with the datasets
@@ -40,6 +32,13 @@ fi
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     echo "Error: This script must be sourced, not executed." >&2
     echo "Usage: source ${BASH_SOURCE[0]}" >&2
+    return 1
+fi
+
+# Check if arguments were provided
+if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+    echo "Invalid number of arguments!"
+    echo "Usage: $0 'pattern specs list' 'selector specs list"
     return 1
 fi
 

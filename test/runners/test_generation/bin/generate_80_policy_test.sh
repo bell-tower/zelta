@@ -1,16 +1,6 @@
 #!/usr/bin/env bash
-# Get the directory where this script is located
-SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-TEST_GEN_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-CONFIG_DIR="$TEST_GEN_DIR/config/test_defs"
-GENERATE_TEST="$TEST_GEN_DIR/lib/orchestration/generate_test.sh"
 
-# Generate tests for 80 examples
+TEST_DEF=080_zelta_policy_test.yml
+SETUP_SPECS="test/01*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/040_*_spec.sh|test/050_*_spec.sh|test/060_*_spec.sh|test/070_*_spec.sh"
 
-if ! "$GENERATE_TEST" \
- "$CONFIG_DIR/080_zelta_policy_test.yml" \
- "test/01*_spec.sh|test/01*_spec.sh|test/02*_spec.sh|test/040_*_spec.sh|test/050_*_spec.sh|test/060_*_spec.sh|test/070_*_spec.sh"; then
-
-  printf "\n ❌ Failed to generate 080 test\n"
-  exit 1
-fi
+./generate_test.sh $TEST_DEF "$SETUP_SPECS"

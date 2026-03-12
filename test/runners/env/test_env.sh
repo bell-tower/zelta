@@ -19,5 +19,5 @@ unset SANDBOX_ZELTA_TGT_REMOTE
 #export SANDBOX_ZELTA_SRC_REMOTE=dever@uvm1 # Ubuntu source
 #export SANDBOX_ZELTA_TGT_REMOTE=dever@uvm1 # Ubuntu remote
 
-#export SANDBOX_ZELTA_SRC_REMOTE=dever@lusvr01 # FreeBSD source
-#export SANDBOX_ZELTA_TGT_REMOTE=dever@lusvr01 # FreeBSD remote
+export SANDBOX_ZELTA_SRC_REMOTE=dever@lusvr01 # FreeBSD source
+export SANDBOX_ZELTA_TGT_REMOTE=dever@lusvr01 # FreeBSD remote
