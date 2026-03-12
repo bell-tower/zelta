@@ -1,5 +1,5 @@
 # Auto-generated ShellSpec test file
-# Generated at: 2026-03-10 03:07:56 -0400
+# Generated at: 2026-03-10 23:54:05 -0400
 # Source: 040_zelta_tests_spec
 # WARNING: This file was automatically generated. Manual edits may be lost.
 
@@ -41,7 +41,7 @@ output_for_rotate_after_divergence() {
         "renaming '${SANDBOX_ZELTA_TGT_DS}' to '${SANDBOX_ZELTA_TGT_DS}_start'"|\
         "to ensure target is up-to-date, run: zelta backup ${SANDBOX_ZELTA_SRC_EP} ${SANDBOX_ZELTA_TGT_EP}"|\
         "no source: ${SANDBOX_ZELTA_TGT_DS}/sub1/kid"|\
-        "* sent, 10 streams received in * seconds")
+        ""*" sent, 10 streams received in "*" seconds")
         ;;
       *)
         printf "Unexpected line format: %s\n" "$line" >&2
@@ -87,7 +87,7 @@ output_for_backup_after_rotate() {
     case "$normalized" in
         "syncing 10 datasets"|\
         "10 datasets up-to-date"|\
-        "* sent, 3 streams received in * seconds")
+        ""*" sent, 3 streams received in "*" seconds")
         ;;
       *)
         printf "Unexpected line format: %s\n" "$line" >&2

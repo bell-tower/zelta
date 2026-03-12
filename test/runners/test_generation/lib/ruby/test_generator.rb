@@ -10,6 +10,8 @@ require 'fileutils'
 require 'time'
 require_relative 'placeholders'
 require_relative 'sys_exec'
+require_relative 'env_substitutor'
+require_relative 'path_config'
 
 # TestGenerator - Generates ShellSpec test files from YAML configuration
 class TestGenerator
@@ -22,8 +24,8 @@ class TestGenerator
 
   private_constant :REPO_ROOT, :TEST_GEN_DIR, :GENERATE_MATCHER_SH_SCRIPT
 
-  attr_reader :config, :output_dir, :shellspec_name, :describe_desc, :test_list, :skip_if_list,
-              :matcher_files, :wip_file_path, :final_file_path, :env_var_names, :sorted_env_map
+  attr_reader :config, :shellspec_name, :describe_desc, :test_list, :skip_if_list,
+              :matcher_files, :paths
 
   def initialize(yaml_file_path, env_var_names = DEFAULT_ENV_VAR_NAMES)
     # Resolve path relative to this file's directory if it's a relative path
@@ -36,20 +38,14 @@ class TestGenerator
 
     @shellspec_name = @config['shellspec_name']
     @describe_desc = @config['describe_desc']
-
-    # Resolve output_dir relative to test_generation directory
-    output_dir = @config['output_dir']
-    @output_dir = output_dir.start_with?('/') ? output_dir : File.join(TEST_GEN_DIR, output_dir)
-
     @test_list = @config['test_list'] || []
     @skip_if_list = @config['skip_if_list'] || []
     @matcher_files = []
-    @wip_file_path = File.join(@output_dir, "#{@shellspec_name}_wip.sh")
-    # remove _spec to prevent shellspec from finding the WIP file
-    @wip_file_path.sub!('_spec', '')
-    @final_file_path = File.join(@output_dir, "#{@shellspec_name}.sh")
-    @env_var_names = env_var_names
-    @sorted_env_map = build_sorted_env_map
+
+    # Initialize helper objects
+    @paths = PathConfig.new(@config['output_dir'], @shellspec_name, TEST_GEN_DIR)
+    @env_substitutor = EnvSubstitutor.new(env_var_names)
+
     puts "Loading configuration from: #{@config.inspect}\n"
     puts '=' * 60
   end
@@ -64,16 +60,6 @@ class TestGenerator
 
   private
 
-  def build_sorted_env_map
-    # Parse and sort env vars by value length (descending)
-    env_map = @env_var_names.split(':').each_with_object({}) do |name, hash|
-      hash[name] = ENV[name] if ENV[name]
-    end
-
-    # Sort by value length descending to replace longest matches first
-    env_map.sort_by { |_name, value| -value.length }
-  end
-
   def matcher_func_name(test_name)
     "output_for_#{test_name}"
   end
@@ -84,12 +70,12 @@ class TestGenerator
   end
 
   def create_output_directory
-    FileUtils.mkdir_p(@output_dir)
-    puts "Created output directory: #{@output_dir}"
+    FileUtils.mkdir_p(@paths.output_dir)
+    puts "Created output directory: #{@paths.output_dir}"
   end
 
   def create_wip_file
-    File.open(@wip_file_path, 'w') do |file|
+    File.open(@paths.wip_file_path, 'w') do |file|
       file.puts "Describe '#{@describe_desc}'"
 
       # Add Skip If statements for each condition
@@ -98,7 +84,7 @@ class TestGenerator
       end
       file.puts '' unless @skip_if_list.empty?
     end
-    puts "Created WIP file: #{@wip_file_path}"
+    puts "Created WIP file: #{@paths.wip_file_path}"
   end
 
   def process_tests
@@ -121,7 +107,7 @@ class TestGenerator
     end
 
     # Close Describe block
-    File.open(@wip_file_path, 'a') do |file|
+    File.open(@paths.wip_file_path, 'a') do |file|
       file.puts 'End'
     end
   end
@@ -141,13 +127,13 @@ class TestGenerator
     # Add allow_no_output flag
     allow_no_output_flag = allow_no_output ? "true" : "false"
 
-    cmd = "#{matcher_script} \"#{full_command}\" #{matcher_function_name} #{@output_dir} #{allow_no_output_flag}"
+    cmd = "#{matcher_script} \"#{full_command}\" #{matcher_function_name} #{@paths.output_dir} #{allow_no_output_flag}"
     SysExec.run(cmd, timeout: 10)
 
     unless allow_no_output
       # Track the generated matcher file
       func_name = matcher_func_name(test_name)
-      matcher_file = File.join(@output_dir, func_name, "#{func_name}.sh")
+      matcher_file = File.join(@paths.output_dir, func_name, "#{func_name}.sh")
 
       # Post-process the matcher file to apply env substitutions
       if File.exist?(matcher_file)
@@ -206,58 +192,30 @@ class TestGenerator
   end
 
   def append_it_clause(test_name, it_desc, when_command, allow_no_output)
-    File.open(@wip_file_path, 'a') do |file|
+    File.open(@paths.wip_file_path, 'a') do |file|
       file.puts "  It \"#{it_desc.gsub('"', '\\"')}\""
 
       func_name = matcher_func_name(test_name)
 
-      # TODO: clean up all the trial and error with shellspec error output, documented approaches don't work!
      # Check for stderr output
-      stderr_file = File.join(@output_dir, func_name, "#{func_name}_stderr.out")
+      stderr_file = File.join(@paths.output_dir, func_name, "#{func_name}_stderr.out")
       expected_error = nil
       if File.exist?(stderr_file) && !File.zero?(stderr_file)
         expected_error = format_expected_error(stderr_file)
-        #file.puts expected_error
-        #status_line = '    The status should be failure'
-      else
-        #status_line = '    The status should equal 0'
       end
 
-      # TODO: zelta exits with 0 even when there is error output
-      #status_line = '    The status should equal 0'
+      # TODO: double check if zelta exits with 0 even when there is error output
       status_line = '    The status should be success'
 
       file.puts "    When call #{when_command}"
-
       file.puts "    The output should satisfy #{matcher_func_name(test_name)}" unless allow_no_output
 
+      # NOTE: this style of checking error output was the only one that worked for me, inline equal
       file.puts "    The error should equal \"#{expected_error}\"\n" if expected_error
       file.puts status_line
-
       file.puts '  End'
       file.puts ''
     end
-  end
-
-  def v1_format_expected_error(stderr_file)
-    lines = read_stderr_file(stderr_file)
-    result = "    expected_error=%text\n"
-    lines.each do |line|
-      result += "    #|#{line}\n"
-    end
-    "#{result}    End\n"
-  end
-  # expected_error() { %text
-  # #|warning: insufficient snapshots; performing full backup for 3 datasets
-  # #|warning: missing `zfs allow` permissions: readonly,mountpoint
-  # }
-  def v2_format_expected_error(stderr_file)
-    lines = read_stderr_file(stderr_file)
-    result = "    expected_error() { %text\n"
-    lines.each do |line|
-      result += "    #|#{line}\n"
-    end
-    "#{result}    }\n"
   end
 
   def format_expected_error(stderr_file)
@@ -266,13 +224,16 @@ class TestGenerator
     lines.join("\n")
   end
 
-  def normalize_output_line(line)
+  def clean_up_output_line(line)
     # Normalize whitespace
     normalized = line.gsub(/\s+/, ' ').strip
 
     # Replace timestamp patterns (both @zelta_ and _zelta_ prefixes)
     normalized.gsub!(/@zelta_\d{4}-\d{2}-\d{2}_\d{2}\.\d{2}\.\d{2}/, '@zelta_"*"')
     normalized.gsub!(/_zelta_\d{4}-\d{2}-\d{2}_\d{2}\.\d{2}\.\d{2}/, '_zelta_"*"')
+
+    # replace timestamp for generated zelta policy files is YYYY-MM-DD_HH.MM.SS with *
+    normalized.gsub!(/_[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}\.[0-9]{2}\.[0-9]{2}/, '_"*"')
 
     # Escape backticks
     normalized.gsub!('`', '\\\`')
@@ -281,24 +242,18 @@ class TestGenerator
     if normalized =~ /(\d+[KMGT]? sent, )(\d+ streams)( received in \d+\.\d+ seconds)/
       stream_count = $2
       normalized.gsub!(/\d+[KMGT]? sent, \d+ streams received in \d+\.\d+ seconds/,
-                      "* sent, #{stream_count} received in * seconds")
+                       "\"*\" sent, #{stream_count} received in \"*\" seconds")
     end
-
-    # Substitute env var names for values (longest first)
-    # Use a placeholder to prevent already-substituted values from being re-matched
-    placeholder_map = {}
-    @sorted_env_map.each_with_index do |(name, value), idx|
-      placeholder = "__ENV_PLACEHOLDER_#{idx}__"
-      normalized.gsub!(value, placeholder)
-      placeholder_map[placeholder] = "${#{name}}"
-    end
-
-    # Replace placeholders with actual env var references
-    placeholder_map.each do |placeholder, replacement|
-      normalized.gsub!(placeholder, replacement)
-    end
-
     normalized
+  end
+
+  def normalize_output_line(line)
+    result = @env_substitutor.substitute(
+      clean_up_output_line(line)
+    )
+    puts("line subs; before: #{line}")
+    puts("line subs; before: #{result}")
+    result
   end
 
   def read_stderr_file(stderr_file)
@@ -309,7 +264,7 @@ class TestGenerator
   end
 
   def assemble_final_file
-    File.open(@final_file_path, 'w') do |final|
+    File.open(@paths.final_file_path, 'w') do |final|
       final.puts '# Auto-generated ShellSpec test file'
       final.puts "# Generated at: #{Time.now}"
       final.puts "# Source: #{@shellspec_name}"
@@ -325,9 +280,9 @@ class TestGenerator
       end
 
       # Copy the WIP file content
-      final.puts File.read(@wip_file_path) if File.exist?(@wip_file_path)
+      final.puts File.read(@paths.wip_file_path) if File.exist?(@paths.wip_file_path)
     end
-    puts "Assembled final test file: #{@final_file_path}"
+    puts "Assembled final test file: #{@paths.final_file_path}"
   end
 
   def report_summary
@@ -337,16 +292,16 @@ class TestGenerator
     puts "YAML Configuration: #{@config.inspect}"
     puts "ShellSpec Name: #{@shellspec_name}"
     puts "Description: #{@describe_desc}"
-    puts "Output Directory: #{@output_dir}"
+    puts "Output Directory: #{@paths.output_dir}"
     puts "Tests Processed: #{@test_list.length}"
     puts "Matcher Files Generated: #{@matcher_files.length}"
     puts "\nGenerated Files:"
-    puts "  - WIP File: #{@wip_file_path}"
+    puts "  - WIP File: #{@paths.wip_file_path}"
     @matcher_files.each do |file|
       puts "  - Matcher: #{file}"
     end
     puts "\nFinal ShellSpec Test File:"
-    puts "  Location: #{@final_file_path}"
+    puts "  Location: #{@paths.final_file_path}"
     puts '=' * 60
     puts "__SHELLSPEC_NAME__:#{@shellspec_name}"
   end
@@ -380,3 +335,4 @@ end
 
 # Script execution
 run_generator if __FILE__ == $PROGRAM_NAME
+

@@ -10,6 +10,18 @@ TEST_GEN_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 CONFIG_DIR="$TEST_GEN_DIR/config"
 ZELTA_TEST_POLICY_CONFIG_FILE="$CONFIG_DIR/zelta_test_policy.conf"
 
+
+if [ -n "$SANDBOX_ZELTA_SRC_REMOTE" ]; then
+   src_host="$SANDBOX_ZELTA_SRC_REMOTE"
+else
+   src_host="localhost"
+fi
+
+tgt_host=""
+if  [ -n "${SANDBOX_ZELTA_TGT_REMOTE}" ]; then
+   tgt_host="${SANDBOX_ZELTA_TGT_REMOTE}:"
+fi
+
 # remove any existing policy file
 rm -f "$ZELTA_TEST_POLICY_CONFIG_FILE"
 
@@ -21,7 +33,7 @@ cat <<EOF > $ZELTA_TEST_POLICY_CONFIG_FILE
 # shellspec auto generated test zelta policy file at: ($CUR_TIME_STAMP)
 # NOTE: any modification will be lost
 BACKUP_SITE:
-  ${SANDBOX_ZELTA_SRC_REMOTE}:
+  ${src_host}:
     datasets:
-    - ${SANDBOX_ZELTA_SRC_DS}: ${SANDBOX_ZELTA_TGT_REMOTE}:${SANDBOX_ZELTA_TGT_DS}/${BACKUP_NAME}
+    - ${SANDBOX_ZELTA_SRC_DS}: ${tgt_host}${SANDBOX_ZELTA_TGT_DS}/${BACKUP_NAME}
 EOF

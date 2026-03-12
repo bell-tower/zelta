@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 
 # Check if arguments were provided
-if [ $# -ne 1 ]; then
-    echo "Missing SPECS argument!"
-    echo "Usage: $0 'specs list'"
+if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+    echo "Invalid number of arguments!"
+    echo "Usage: $0 'pattern specs list' 'selector specs list"
     return 1
 fi
-
-SPECS=$1
 
 #VAR="${VAR-default_value}"
 # *** only source this script in bash, do not execute it
@@ -42,17 +40,17 @@ fi
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     echo "Error: This script must be sourced, not executed." >&2
     echo "Usage: source ${BASH_SOURCE[0]}" >&2
-    exit 1
+    return 1
 fi
 
 # tree setup utility
 . "$TEST_GEN_DIR/lib/orchestration/setup_tree.sh"
 
-if setup_tree "$SPECS"; then
-    printf "\n ✅ initial tree setup succeeded for specs: %s\n" "$SPECS"
+if setup_tree "$@"; then
+    printf "\n ✅ initial tree setup succeeded for specs: %s\n" "$@"
 else
-    printf "\n ❌ Goodbye, initial tree setup failed for specs: %s\n" "$SPECS"
-    exit 1
+    printf "\n ❌ Goodbye, initial tree setup failed for specs: %s\n" "$@"
+    return 1
 fi
 
 # setup the debugging environment

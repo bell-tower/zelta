@@ -1,5 +1,5 @@
 # Auto-generated ShellSpec test file
-# Generated at: 2026-03-10 03:08:42 -0400
+# Generated at: 2026-03-10 23:54:51 -0400
 # Source: 050_zelta_revert_spec
 # WARNING: This file was automatically generated. Manual edits may be lost.
 
@@ -26,7 +26,7 @@ output_for_backup_after_delta() {
     case "$normalized" in
         "source is written; snapshotting: @zelta_"*""|\
         "syncing 12 datasets"|\
-        "* sent, 22 streams received in * seconds")
+        ""*" sent, 22 streams received in "*" seconds")
         ;;
       *)
         printf "Unexpected line format: %s\n" "$line" >&2
@@ -62,7 +62,7 @@ output_for_rotate_after_revert() {
         "to ensure target is up-to-date, run: zelta backup ${SANDBOX_ZELTA_SRC_EP} ${SANDBOX_ZELTA_TGT_EP}"|\
         "no source: ${SANDBOX_ZELTA_TGT_DS}/sub5"|\
         "no source: ${SANDBOX_ZELTA_TGT_DS}/sub5/child1"|\
-        "* sent, 10 streams received in * seconds")
+        ""*" sent, 10 streams received in "*" seconds")
         ;;
       *)
         printf "Unexpected line format: %s\n" "$line" >&2

@@ -4,13 +4,14 @@ describe_desc: "Test zelta policy"
 skip_if_list:
   - condition: if 'SANDBOX_ZELTA_SRC_DS undefined' test -z "$SANDBOX_ZELTA_SRC_DS"
   - condition: if 'SANDBOX_ZELTA_TGT_DS undefined' test -z "$SANDBOX_ZELTA_TGT_DS"
-  - condition: if 'SANDBOX_ZELTA_SRC_REMOTE undefined' test -z "$SANDBOX_ZELTA_SRC_REMOTE"
-  - condition: if 'SANDBOX_ZELTA_TGT_REMOTE undefined' test -z "$SANDBOX_ZELTA_TGT_REMOTE"
 
 test_list:
+  - test_name: generate_policy_config
+    it_desc: generate zelta policy - %{when_command}
+    allow_no_output: true
+    # generate zelta policy config file from env variables
+    when_command: ./test/runners/test_generation/bin/generate_zelta_policy_config.sh
+
   - test_name: policy_check
-    setup_scripts:
-      # generate zelta policy config file from env variables
-      - "test/runners/test_generation/bin/generate_zelta_policy_config.sh"
     it_desc: test zelta policy - %{when_command}
     when_command: zelta policy -C ./test/runners/test_generation/config/zelta_test_policy.conf

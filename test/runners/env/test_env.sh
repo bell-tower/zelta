@@ -9,7 +9,15 @@ export SANDBOX_ZELTA_SRC_DS=apool/treetop
 export SANDBOX_ZELTA_TGT_DS=bpool/backups
 
 # remotes setup
+
+# unset the current remotes
+unset SANDBOX_ZELTA_SRC_REMOTE
+unset SANDBOX_ZELTA_TGT_REMOTE
+
 #   * leave these undefined if you're running locally
 #   * the endpoints are defined automatically and are REMOTE + DS
-export SANDBOX_ZELTA_SRC_REMOTE=dever@zfsdev # Ubuntu source
-export SANDBOX_ZELTA_TGT_REMOTE=dever@zfsdev # Ubuntu remote
+#export SANDBOX_ZELTA_SRC_REMOTE=dever@uvm1 # Ubuntu source
+#export SANDBOX_ZELTA_TGT_REMOTE=dever@uvm1 # Ubuntu remote
+
+#export SANDBOX_ZELTA_SRC_REMOTE=dever@lusvr01 # FreeBSD source
+#export SANDBOX_ZELTA_TGT_REMOTE=dever@lusvr01 # FreeBSD remote

@@ -1,5 +1,5 @@
 # Auto-generated ShellSpec test file
-# Generated at: 2026-03-10 03:10:49 -0400
+# Generated at: 2026-03-10 23:56:54 -0400
 # Source: 070_zelta_prune_spec
 # WARNING: This file was automatically generated. Manual edits may be lost.
 
@@ -10,7 +10,7 @@ output_for_backup_with_snapshot() {
     case "$normalized" in
         "snapshotting: @zelta_"*""|\
         "syncing 12 datasets"|\
-        "* sent, 12 streams received in * seconds")
+        ""*" sent, 12 streams received in "*" seconds")
         ;;
       *)
         printf "Unexpected line format: %s\n" "$line" >&2
