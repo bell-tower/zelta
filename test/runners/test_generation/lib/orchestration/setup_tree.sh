@@ -10,11 +10,27 @@ setup_tree() {
     selector_specs=$2
     trace_options=$3
 
-    cd "$REPO_ROOT" || exit 1
-    . ./test/test_helper.sh
-    . ./test/runners/env/helpers.sh
-    setup_env "1"      # setup debug environment
-    clean_ds_and_pools # reset tree
+    cd "$REPO_ROOT" || return 1
+
+    if ! . ./test/test_helper.sh; then
+        echo "source ./test/test_helper.sh failed"
+        return 1
+    fi
+
+    if ! . ./test/runners/env/helpers.sh; then
+        echo "source ./test/runners/env/helpers.sh failed"
+        return 1
+    fi
+
+    if ! setup_env "1"; then
+        echo "setup_env failed"
+        return 1
+    fi
+
+    if ! clean_ds_and_pools; then
+        echo "clean_ds_and_pools failed"
+        return 1
+    fi
 
     cmd1=()
     if [ -n "$pattern_specs" ]; then
