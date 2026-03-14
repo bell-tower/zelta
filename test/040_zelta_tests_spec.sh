@@ -1,12 +1,13 @@
 # Auto-generated ShellSpec test file
-# Generated at: 2026-03-12 02:42:58 -0400
+# Generated at: 2026-03-13 13:27:43 -0400
 # Source: 040_zelta_tests_spec
 # WARNING: This file was automatically generated. Manual edits may be lost.
 
 output_for_match_after_divergence() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
-    normalized=$(echo "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    normalized=$(printf '%s
+' 11 total datasets compared | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     case "$normalized" in
         "DS_SUFFIX MATCH SRC_LAST TGT_LAST INFO"|\
         "[treetop] @start @start @start up-to-date"|\
@@ -24,7 +25,8 @@ output_for_match_after_divergence() {
         "11 total datasets compared")
         ;;
       *)
-        printf "Unexpected line format: %s\n" "$line" >&2
+        printf "Unexpected line format : %s\n" "$line" >&2
+        printf "Comparing to normalized: %s\n" "$normalized_line" >&2
         return 1
         ;;
     esac
@@ -35,7 +37,8 @@ output_for_match_after_divergence() {
 output_for_rotate_after_divergence() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
-    normalized=$(echo "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    normalized=$(printf '%s
+' 36K sent, 10 streams received in 0.38 seconds | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     case "$normalized" in
         "source is written; snapshotting: @zelta_"*""|\
         "renaming '${SANDBOX_ZELTA_TGT_DS}' to '${SANDBOX_ZELTA_TGT_DS}_start'"|\
@@ -44,7 +47,8 @@ output_for_rotate_after_divergence() {
         ""*" sent, 10 streams received in "*" seconds")
         ;;
       *)
-        printf "Unexpected line format: %s\n" "$line" >&2
+        printf "Unexpected line format : %s\n" "$line" >&2
+        printf "Comparing to normalized: %s\n" "$normalized_line" >&2
         return 1
         ;;
     esac
@@ -55,7 +59,8 @@ output_for_rotate_after_divergence() {
 output_for_match_after_rotate() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
-    normalized=$(echo "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    normalized=$(printf '%s
+' 10 total datasets compared | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     case "$normalized" in
         "DS_SUFFIX MATCH SRC_LAST TGT_LAST INFO"|\
         "[treetop] @zelta_"*" @zelta_"*" @zelta_"*" up-to-date"|\
@@ -72,7 +77,8 @@ output_for_match_after_rotate() {
         "10 total datasets compared")
         ;;
       *)
-        printf "Unexpected line format: %s\n" "$line" >&2
+        printf "Unexpected line format : %s\n" "$line" >&2
+        printf "Comparing to normalized: %s\n" "$normalized_line" >&2
         return 1
         ;;
     esac
@@ -83,14 +89,16 @@ output_for_match_after_rotate() {
 output_for_backup_after_rotate() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
-    normalized=$(echo "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    normalized=$(printf '%s
+' 1K sent, 3 streams received in 0.06 seconds | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     case "$normalized" in
         "syncing 10 datasets"|\
         "10 datasets up-to-date"|\
         ""*" sent, 3 streams received in "*" seconds")
         ;;
       *)
-        printf "Unexpected line format: %s\n" "$line" >&2
+        printf "Unexpected line format : %s\n" "$line" >&2
+        printf "Comparing to normalized: %s\n" "$normalized_line" >&2
         return 1
         ;;
     esac

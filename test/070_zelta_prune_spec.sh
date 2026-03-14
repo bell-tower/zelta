@@ -1,19 +1,21 @@
 # Auto-generated ShellSpec test file
-# Generated at: 2026-03-12 02:45:52 -0400
+# Generated at: 2026-03-13 13:30:37 -0400
 # Source: 070_zelta_prune_spec
 # WARNING: This file was automatically generated. Manual edits may be lost.
 
 output_for_backup_with_snapshot() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
-    normalized=$(echo "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    normalized=$(printf '%s
+' 31K sent, 12 streams received in 0.24 seconds | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     case "$normalized" in
         "snapshotting: @zelta_"*""|\
         "syncing 12 datasets"|\
         ""*" sent, 12 streams received in "*" seconds")
         ;;
       *)
-        printf "Unexpected line format: %s\n" "$line" >&2
+        printf "Unexpected line format : %s\n" "$line" >&2
+        printf "Comparing to normalized: %s\n" "$normalized_line" >&2
         return 1
         ;;
     esac
@@ -24,7 +26,8 @@ output_for_backup_with_snapshot() {
 output_for_prune_check() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
-    normalized=$(echo "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    normalized=$(printf '%s
+' apool/treetop/sub4/zvol@zelta_2026-03-13_17.30.23 | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     case "$normalized" in
         "${SANDBOX_ZELTA_SRC_DS}@zelta_"*""|\
         "${SANDBOX_ZELTA_SRC_DS}/sub1@zelta_"*""|\
@@ -38,7 +41,8 @@ output_for_prune_check() {
         "${SANDBOX_ZELTA_SRC_DS}/sub4/zvol@zelta_"*"")
         ;;
       *)
-        printf "Unexpected line format: %s\n" "$line" >&2
+        printf "Unexpected line format : %s\n" "$line" >&2
+        printf "Comparing to normalized: %s\n" "$normalized_line" >&2
         return 1
         ;;
     esac
