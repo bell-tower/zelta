@@ -20,7 +20,7 @@ jobs:
           sudo apt-get install -y zfsutils-linux man-db
 
       - name: Install ShellSpec
-        run: curl -fsSL https://git.io/shellspec | sh -s -- --yes --prefix /usr/local
+        run: curl -fsSL https://git.io/shellspec | sudo sh -s -- --yes --prefix /usr/local
 
       - name: Create test user
         run: |
