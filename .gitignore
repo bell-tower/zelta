@@ -1,8 +1,9 @@
+.*
 !.gitignore
 !.shellspec
+!.github/
 *.swp
 *.swo
-.*
 doc/man?
 tmp
 hide.*
@@ -14,3 +15,4 @@ A*d
 retired/
 logs
 log
+ci/*
