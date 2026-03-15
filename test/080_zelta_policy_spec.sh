@@ -1,19 +1,18 @@
 # Auto-generated ShellSpec test file
-# Generated at: 2026-03-13 13:31:48 -0400
+# Generated at: 2026-03-15 03:03:10 -0400
 # Source: 080_zelta_policy_spec
 # WARNING: This file was automatically generated. Manual edits may be lost.
 
 output_for_policy_check() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
-    normalized=$(printf '%s
-' [BACKUP_SITE: dever@uvm1:bpool/backups] dever@uvm1:apool/treetop: 12 datasets up-to-date | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    normalized=$(printf '%s' "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     case "$normalized" in
         "[BACKUP_SITE: ${SANDBOX_ZELTA_TGT_EP}] ${SANDBOX_ZELTA_SRC_EP}: 12 datasets up-to-date")
         ;;
       *)
         printf "Unexpected line format : %s\n" "$line" >&2
-        printf "Comparing to normalized: %s\n" "$normalized_line" >&2
+        printf "Comparing to normalized: %s\n" "$normalized" >&2
         return 1
         ;;
     esac

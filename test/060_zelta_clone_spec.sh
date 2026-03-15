@@ -1,13 +1,12 @@
 # Auto-generated ShellSpec test file
-# Generated at: 2026-03-13 13:29:30 -0400
+# Generated at: 2026-03-15 03:00:54 -0400
 # Source: 060_zelta_clone_spec
 # WARNING: This file was automatically generated. Manual edits may be lost.
 
 output_for_zfs_list_for_clone() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
-    normalized=$(printf '%s
-' apool/treetop/copy_of_sub2/orphan apool/treetop/sub2/orphan@zelta_2026-03-13_17.29.21 | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    normalized=$(printf '%s' "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     case "$normalized" in
         "NAME ORIGIN"|\
         "${SANDBOX_ZELTA_SRC_DS}/copy_of_sub2 ${SANDBOX_ZELTA_SRC_DS}/sub2@zelta_"*""|\
@@ -15,7 +14,7 @@ output_for_zfs_list_for_clone() {
         ;;
       *)
         printf "Unexpected line format : %s\n" "$line" >&2
-        printf "Comparing to normalized: %s\n" "$normalized_line" >&2
+        printf "Comparing to normalized: %s\n" "$normalized" >&2
         return 1
         ;;
     esac

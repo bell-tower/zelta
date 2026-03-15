@@ -1,19 +1,18 @@
 # Auto-generated ShellSpec test file
-# Generated at: 2026-03-13 13:28:30 -0400
+# Generated at: 2026-03-15 02:59:54 -0400
 # Source: 050_zelta_revert_spec
 # WARNING: This file was automatically generated. Manual edits may be lost.
 
 output_for_snapshot() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
-    normalized=$(printf '%s
-' snapshot created 'apool/treetop@manual_test' | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    normalized=$(printf '%s' "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     case "$normalized" in
         "snapshot created '${SANDBOX_ZELTA_SRC_DS}@manual_test'")
         ;;
       *)
         printf "Unexpected line format : %s\n" "$line" >&2
-        printf "Comparing to normalized: %s\n" "$normalized_line" >&2
+        printf "Comparing to normalized: %s\n" "$normalized" >&2
         return 1
         ;;
     esac
@@ -24,8 +23,7 @@ output_for_snapshot() {
 output_for_backup_after_delta() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
-    normalized=$(printf '%s
-' 37K sent, 22 streams received in 0.47 seconds | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    normalized=$(printf '%s' "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     case "$normalized" in
         "source is written; snapshotting: @zelta_"*""|\
         "syncing 12 datasets"|\
@@ -33,7 +31,7 @@ output_for_backup_after_delta() {
         ;;
       *)
         printf "Unexpected line format : %s\n" "$line" >&2
-        printf "Comparing to normalized: %s\n" "$normalized_line" >&2
+        printf "Comparing to normalized: %s\n" "$normalized" >&2
         return 1
         ;;
     esac
@@ -44,14 +42,13 @@ output_for_backup_after_delta() {
 output_for_snapshot_again() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
-    normalized=$(printf '%s
-' snapshot created 'apool/treetop@another_test' | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    normalized=$(printf '%s' "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     case "$normalized" in
         "snapshot created '${SANDBOX_ZELTA_SRC_DS}@another_test'")
         ;;
       *)
         printf "Unexpected line format : %s\n" "$line" >&2
-        printf "Comparing to normalized: %s\n" "$normalized_line" >&2
+        printf "Comparing to normalized: %s\n" "$normalized" >&2
         return 1
         ;;
     esac
@@ -62,8 +59,7 @@ output_for_snapshot_again() {
 output_for_rotate_after_revert() {
   while IFS= read -r line; do
     # normalize whitespace, remove leading/trailing spaces
-    normalized=$(printf '%s
-' 6K sent, 10 streams received in 0.38 seconds | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+    normalized=$(printf '%s' "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     case "$normalized" in
         "renaming '${SANDBOX_ZELTA_TGT_DS}' to '${SANDBOX_ZELTA_TGT_DS}_zelta_"*"'"|\
         "to ensure target is up-to-date, run: zelta backup ${SANDBOX_ZELTA_SRC_EP} ${SANDBOX_ZELTA_TGT_EP}"|\
@@ -73,7 +69,7 @@ output_for_rotate_after_revert() {
         ;;
       *)
         printf "Unexpected line format : %s\n" "$line" >&2
-        printf "Comparing to normalized: %s\n" "$normalized_line" >&2
+        printf "Comparing to normalized: %s\n" "$normalized" >&2
         return 1
         ;;
     esac
