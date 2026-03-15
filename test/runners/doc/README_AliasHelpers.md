@@ -49,7 +49,7 @@ alias zrenv="zcd && . $ZELTA_ENV/reset_env.sh"
 # setup pools, datasets and remotes env vars
 alias ztenv="zcd && . $ZELTA_ENV/test_env.sh"
 
-# access zelta man pages, relies on prior setting fo ZELTA_DOC env var
+# access zelta man pages, relies on prior setting of ZELTA_DOC env var
 # which is the location of the ZELTA man pages
 alias zman='man -M "$ZELTA_DOC"'
 ```
