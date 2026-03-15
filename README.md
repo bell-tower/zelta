@@ -3,10 +3,11 @@
 *Version 1.1, 2026-01-20*
 
 ---
-![ShellSpec Tests](https://github.com/bell-tower/zelta/actions/workflows/shellspec.yml/badge.svg)
 > - **What's New:** Check [CHANGELOG.md](CHANGELOG.md) for the latest changes
 > - **Found a Bug?** Please [open an issue](https://github.com/bellhyve/zelta/issues)
 > - **Previous Release:** [March 2024, Zelta v1.0](https://github.com/bellhyve/zelta/tree/release/1.0)
+> 
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  ![ShellSpec Tests](https://github.com/bell-tower/zelta/actions/workflows/shellspec.yml/badge.svg)
 ---
 
 [zelta.space](https://zelta.space) | [Documentation](https://zelta.space/en/home) | [GitHub](https://github.com/bellhyve/zelta)
