@@ -2,7 +2,7 @@
 # Zelta One-Shot Installer
 # Downloads latest Zelta from GitHub and runs install.sh
 #
-# Usage: curl -fsSL https://raw.githubusercontent.com/bellhyve/zelta/main/contrib/install-from-git.sh | sh
+# Usage: curl -fsSL https://raw.githubusercontent.com/bell-tower/zelta/main/contrib/install-from-git.sh | sh
 # Or specify branch: curl ... | sh -s -- --branch=develop
 
 set -e
