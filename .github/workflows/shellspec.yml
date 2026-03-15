@@ -27,6 +27,9 @@ jobs:
           sudo useradd -m -s /bin/bash testuser
           echo 'testuser ALL=(ALL) NOPASSWD: /usr/bin/dd *, /usr/bin/rm -f /tmp/*, /usr/bin/truncate *, /usr/sbin/zpool *, /usr/sbin/zfs *' \
             | sudo tee /etc/sudoers.d/testuser
+          sudo chown root:root /etc/sudoers.d/testuser
+          sudo chmod 0440 /etc/sudoers.d/testuser
+          sudo visudo -cf /etc/sudoers.d/testuser
 
       - name: Copy repo for test user
         run: |
