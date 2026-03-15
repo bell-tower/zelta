@@ -31,7 +31,7 @@ class EnvSubstitutor
   def build_sorted_env_map(env_var_names)
     # Parse and sort env vars by value length (descending)
     env_map = env_var_names.split(':').each_with_object({}) do |name, hash|
-      hash[name] = ENV[name] if ENV[name]
+      hash[name] = ENV[name] if ENV[name]&.length&.positive?
     end
 
     # Sort by value length descending to replace longest matches first
