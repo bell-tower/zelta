@@ -248,12 +248,9 @@ class TestGenerator
   end
 
   def normalize_output_line(line)
-    result = @env_substitutor.substitute(
+    @env_substitutor.substitute(
       clean_up_output_line(line)
     )
-    puts("line subs; before: #{line}")
-    puts("line subs; before: #{result}")
-    result
   end
 
   def read_stderr_file(stderr_file)
