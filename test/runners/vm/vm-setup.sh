@@ -38,6 +38,8 @@ echo "==> Configuring sudoers"
 echo 'testuser ALL=(ALL) NOPASSWD: /usr/bin/dd *, /usr/bin/rm -f /tmp/*, /usr/bin/truncate *, /usr/sbin/zpool *, /usr/sbin/zfs *' \
     > /etc/sudoers.d/testuser
 
+chmod 0440 /etc/sudoers.d/testuser
+
 echo "==> Creating test runner script"
 cat > /home/testuser/run_test.sh << 'EOF'
 #!/bin/bash
