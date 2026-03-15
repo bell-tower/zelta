@@ -21,8 +21,7 @@ END {
     print func_name "() {"
     print "  while IFS= read -r line; do"
     print "    # normalize whitespace, remove leading/trailing spaces"
-    print "    normalized=$(printf '%s\n' "$line" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
-
+    print "    normalized=\$(printf '%s' \"\$line\" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*\$//')"
     print "    case \"$normalized\" in"
 
     line_continue = "\"|\\"
@@ -36,7 +35,7 @@ END {
     print "        ;;"
     print "      *)"
     print "        printf \"Unexpected line format : %s\\n\" \"$line\" >&2"
-    print "        printf \"Comparing to normalized: %s\\n\" \"$normalized_line\" >&2"
+    print "        printf \"Comparing to normalized: %s\\n\" \"$normalized\" >&2"
     print "        return 1"
     print "        ;;"
     print "    esac"
