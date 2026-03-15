@@ -32,22 +32,34 @@ setup_tree() {
         return 1
     fi
 
+    # Split trace_options into array (if not empty)
+    trace_opts=()
+    if [ -n "$trace_options" ]; then
+        read -ra trace_opts <<< "$trace_options"
+    fi
+
+    # Split selector_specs into array (if not empty)
+    selector_opts=()
+    if [ -n "$selector_specs" ]; then
+        read -ra selector_opts <<< "$selector_specs"
+    fi
+
     cmd1=()
     if [ -n "$pattern_specs" ]; then
         cmd1=(shellspec)
-        if [ -n "$trace_options" ]; then
-            cmd1+=("$trace_options")
+        if [ ${#trace_opts[@]} -gt 0 ]; then
+            cmd1+=("${trace_opts[@]}")
         fi
         cmd1+=(--pattern "$pattern_specs")
     fi
 
     cmd2=()
-    if [ -n "$selector_specs" ]; then
+    if [ ${#selector_opts[@]} -gt 0 ]; then
         cmd2=(shellspec)
-        if [ -n "$trace_options" ]; then
-            cmd2+=("$trace_options")
+        if [ ${#trace_opts[@]} -gt 0 ]; then
+            cmd2+=("${trace_opts[@]}")
         fi
-        cmd2+=("$selector_specs")
+        cmd2+=("${selector_opts[@]}")
     fi
 
     set -x
@@ -65,5 +77,4 @@ setup_tree() {
     set +x
 
     printf "\n ✅ setup succeeded\n"
-
 }
