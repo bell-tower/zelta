@@ -52,13 +52,20 @@ export SANDBOX_ZELTA_SRC_DS=apool/treetop
 export SANDBOX_ZELTA_TGT_DS=bpool/backups
 shellspec
 EOF
+
 chmod +x /home/testuser/run_test.sh
 chown testuser:testuser /home/testuser/run_test.sh
+echo "created test runner: /home/testuser/run_test.sh"
+
+git clone https://github.com/bell-tower/zelta.git /home/testuser/zelta
+chown -R testuser:testuser /home/testuser/zelta
+echo "cloned zelta to: /home/testuser/zelta"
 
 echo ""
 echo "==> Setup complete!"
 echo ""
-echo "Next steps:"
-echo "  1. Clone or copy the zelta repo to /home/testuser/zelta"
-echo "  2. chown -R testuser:testuser /home/testuser/zelta"
-echo "  3. Run tests: su - testuser -c ~testuser/run_test.sh"
+echo "To run tests:"
+echo "  su - testuser"
+echo "  cd zelta"
+echo "  git checkout (branchname)"
+echo "  ~/run_test.sh"
