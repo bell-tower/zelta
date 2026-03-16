@@ -21,7 +21,12 @@ END {
     print func_name "() {"
     print "  while IFS= read -r line; do"
     print "    # normalize whitespace, remove leading/trailing spaces"
-    print "    normalized=\$(printf '%s' \"\$line\" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*\$//')"
+
+    # Use printf with %s format specifier to avoid \$ escapes
+    dollar = "$"
+    printf "    normalized=%s(printf '%%s' \"%sline\" | tr -s '[:space:]' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*%s//')\n", dollar, dollar, dollar
+
+    print "    # check line against expected output"
     print "    case \"$normalized\" in"
 
     line_continue = "\"|\\"
