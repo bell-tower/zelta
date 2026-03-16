@@ -1,17 +1,16 @@
 ![Zelta Logo](https://zelta.space/index/zelta-banner.svg)
-
 # The Zelta Backup and Recovery Suite
 *Version 1.1, 2026-01-20*
 
 ---
-
 > - **What's New:** Check [CHANGELOG.md](CHANGELOG.md) for the latest changes
-> - **Found a Bug?** Please [open an issue](https://github.com/bellhyve/zelta/issues)
-> - **Previous Release:** [March 2024, Zelta v1.0](https://github.com/bellhyve/zelta/tree/release/1.0)
-
+> - **Found a Bug?** Please [open an issue](https://github.com/bell-tower/zelta/issues)
+> - **Previous Release:** [March 2024, Zelta v1.0](https://github.com/bell-tower/zelta/tree/release/1.0)
+> 
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  ![ShellSpec Tests](https://github.com/bell-tower/zelta/actions/workflows/shellspec.yml/badge.svg)
 ---
 
-[zelta.space](https://zelta.space) | [Documentation](https://zelta.space/en/home) | [GitHub](https://github.com/bellhyve/zelta)
+[zelta.space](https://zelta.space) | [Documentation](https://zelta.space/en/home) | [GitHub](https://github.com/bell-tower/zelta)
 
 **Zelta** provides bulletproof backups that meet strict compliance requirements while remaining straightforward to deploy and operate. It transforms complex backup and recovery operations into safe, auditable commands—protecting your data without requiring specialized expertise.
 
@@ -41,7 +40,7 @@ Written in portable Bourne shell and AWK, Zelta runs anywhere ZFS runs. No packa
 
 ### From Source (Recommended for Zelta 1.1)
 ```sh
-git clone https://github.com/bellhyve/zelta.git
+git clone https://github.com/bell-tower/zelta.git
 cd zelta
 sudo ./install.sh
 # The installer will guide you through setup.
@@ -59,12 +58,12 @@ pkg install zelta
 The following command clones Zelta from the `main` branch and launches the installer. Run this as a personal or backup user for a local, non-root installation. If you prefer a system-wide installation, run the command as root or via `sudo/doas`.
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/bellhyve/zelta/main/contrib/install-from-git.sh | sh
+curl -fsSL https://raw.githubusercontent.com/bell-tower/zelta/main/contrib/install-from-git.sh | sh
 ```
 
 The installer will detect your privileges and guide you through adding the necessary environment variables to your shell profile.
 
-*Security Note: As with any script piped from the internet, we encourage you to [inspect the installer source](https://github.com/bellhyve/zelta/blob/main/contrib/install-from-git.sh) before execution.*
+*Security Note: As with any script piped from the internet, we encourage you to [inspect the installer source](https://github.com/bell-tower/zelta/blob/main/contrib/install-from-git.sh) before execution.*
 
 ---
 
@@ -187,7 +186,7 @@ We welcome contributors who are passionate about data protection and recovery. B
 
 ### Contact
 
-We welcome questions, bug reports, and feature requests at [GitHub Issues](https://github.com/bellhyve/zelta/issues).
+We welcome questions, bug reports, and feature requests at [GitHub Issues](https://github.com/bell-tower/zelta/issues).
 
 For other inquiries including business questions, you can reach the Zelta team at Bell Tower via our [contact form](https://belltower.it/contact/).
 

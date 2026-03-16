@@ -55,6 +55,7 @@ fi
 if [ ! -s "$OUT_FL" ]; then
     if [ "$allow_no_output" != "true" ]; then
         printf "\n ❌ Error: zelta produced no output\n"
+        printf " 🛠️⚙️➡️ If that is expected, 💡 add option 'allow_no_output: true' to your test\n"
         printf "****-> review and update zelta cmd: \"%s\"\n" "$zelta_cmd"
         exit 1
     else
