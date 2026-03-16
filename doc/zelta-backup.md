@@ -73,7 +73,7 @@ _target_
 : Increase verbosity. Specify once for operational detail, twice (`-vv`) for debug output.
 
 **-q, \--quiet**
-: Quiet output. Specify once to suppress warnings, twice (`-qq`) to suppress errors.
+: Decrease log level. Specify once to suppress notices, twice (`-qq`) to suppress warnings.
 
 **-j, \--json**
 : Output results in JSON format. See **zelta-options(7)** for details.

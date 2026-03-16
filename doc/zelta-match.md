@@ -18,7 +18,7 @@
 :    Increase verbosity. Specify once for operational detail and twice (-vv) for debug output.
 
 **-q, \--quiet**
-:    Quiet output. Specify once to suppress warnings and twice (-qq) to suppress errors.
+:    Decrease log level. Specify once to suppress notices, twice (-qq) to suppress warnings.
 
 **\--log-level**
 :    Specify a log level value 0-4: errors (0), warnings (1), notices (2, default), info (3, verbose), and debug (4).
