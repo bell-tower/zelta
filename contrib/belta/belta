@@ -1,0 +1,280 @@
+#!/bin/sh
+# belta - btrfs-to-zfs command translator for zelta
+#
+# Translates zfs-style commands into btrfs equivalents and transforms
+# btrfs output back into the zfs format that the zelta AWK core expects.
+#
+# Called by zelta's command builder via TSV commands.
+# Usage: belta <subcommand> [args...]
+
+set -e
+
+## Helpers
+##########
+
+# Convert a btrfs hex UUID to a numeric GUID for zelta AWK compatibility.
+# Strips hyphens, takes first 15 hex chars, converts to decimal.
+belta_uuid_to_guid() {
+	_uuid="$1"
+	if [ -z "$_uuid" ] || [ "$_uuid" = "-" ]; then
+		echo "0"
+		return
+	fi
+	# Strip hyphens and convert to decimal
+	_hex=$(echo "$_uuid" | tr -d '-')
+	printf '%d\n' "0x$(echo "$_hex" | cut -c1-15)"
+}
+
+## Subcommands
+###############
+
+# belta check - verify a dataset path exists
+# Usage: belta check <ds>
+belta_check() {
+	if [ $# -lt 1 ]; then
+		echo "belta check: missing dataset" >&2
+		return 1
+	fi
+	_ds="$1"
+	
+	if btrfs subvolume show "$_ds" >/dev/null 2>&1; then
+		echo "$_ds"
+	fi
+}
+
+# belta list - enumerate subvolumes and snapshots with GUIDs
+# Usage: belta list <ds>
+# Output: tab-separated name, guid, written, creation
+belta_list() {
+	if [ $# -lt 1 ]; then
+		echo "belta list: missing dataset" >&2
+		return 1
+	fi
+	_base="$1"
+
+	# Detect if listing from FS_TREE (when arg is a subvolume, not mount point)
+	_list_test=$(btrfs subvolume list -a "$_base" 2>/dev/null | head -n 1)
+	case "$_list_test" in
+	*\<FS_TREE\>*)
+		# Extract first path component (mount point)
+		_mount="/$(echo "$_base" | sed 's|^/||' | cut -d/ -f1)"
+		;;
+	*)
+		_mount="$_base"
+		;;
+	esac
+
+	# Extract dataset name for filtering
+	_ds_name=$(echo "$_base" | sed 's|^/||;s|/$||' | awk -F/ '{print $NF}')
+	_mount_name=$(echo "$_mount" | sed 's|^/||')
+	if [ "$_ds_name" = "$_mount_name" ]; then
+		_ds_filter=""
+	else
+		_ds_filter="$_ds_name"
+	fi
+
+	# Collect output for sorting; trap ensures cleanup on interrupt
+	_tmpfile=$(mktemp)
+	trap 'rm -f "$_tmpfile"' EXIT INT TERM
+	
+	# Enumerate subvolumes
+	btrfs subvolume list -a "$_base" 2>/dev/null | while IFS= read -r _line; do
+		_path=$(echo "$_line" | sed 's/.* path //;s|^<FS_TREE>/||')
+
+		# Filter by dataset name
+		if [ -n "$_ds_filter" ]; then
+			case "$_path" in
+			"$_ds_filter"|"$_ds_filter"@*) ;;
+			*) continue ;;
+			esac
+		fi
+
+		# Get subvolume info
+		_show=$(btrfs subvolume show "$_mount/$_path" 2>/dev/null) || continue
+
+		# Use Received UUID for matching if available
+		_received_uuid=$(echo "$_show" | awk '/^\tReceived UUID:/{print $3}')
+		_uuid=$(echo "$_show" | awk '/^\tUUID:/{print $2}')
+		[ -n "$_received_uuid" ] && [ "$_received_uuid" != "-" ] && _uuid="$_received_uuid"
+		
+		# Get creation time - for received snapshots, use Send time if available
+		_otime=$(echo "$_show" | awk '/^\tCreation time:/{print $3, $4}')
+		_send_time=$(echo "$_show" | awk '/^\tSend time:/{print $3, $4}')
+		
+		# For received snapshots, use the original send time for proper ordering
+		if [ -n "$_send_time" ] && [ "$_send_time" != "-" ]; then
+			_ts=$(date -d "$_send_time" "+%s" 2>/dev/null || echo "0")
+		else
+			_ts=$(date -d "$_otime" "+%s" 2>/dev/null || echo "0")
+		fi
+		
+		_guid=$(belta_uuid_to_guid "$_uuid")
+
+		# Build output path: _mount is the root path, _path is the subvolume name
+		_out_name="$_mount/$_path"
+
+		printf '%s\t%s\t%s\t%s\n' "$_out_name" "$_guid" "0" "$_ts"
+	# Sort by timestamp (descending), then by name (descending) for stable ordering
+	done | sort -t'	' -k4,4nr -k1,1r > "$_tmpfile"
+	
+	cat "$_tmpfile"
+	rm -f "$_tmpfile"
+}
+
+# belta get - stub ZFS property output
+# Usage: belta get <ds>
+belta_get() {
+	if [ $# -lt 1 ]; then
+		echo "belta get: missing dataset" >&2
+		return 1
+	fi
+	_ds="$1"
+
+	_show=$(btrfs subvolume show "$_ds" 2>/dev/null) || return 1
+	# Reject FS_TREE root
+	echo "$_show" | grep -q "^[[:space:]]*Name:[[:space:]]*<FS_TREE>" && return 1
+
+	printf '%s\t%s\t%s\n' "$_ds" "type" "filesystem"
+	printf '%s\t%s\t%s\n' "$_ds" "encryption" "off"
+	printf '%s\t%s\t%s\n' "$_ds" "written" "0"
+	printf '%s\t%s\t%s\n' "$_ds" "canmount" "noauto"
+}
+
+# belta snap - create a read-only snapshot
+# Usage: belta snap <ds@snap>
+belta_snap() {
+	if [ $# -lt 1 ]; then
+		echo "belta snap: missing dataset@snapshot" >&2
+		return 1
+	fi
+	case "$1" in
+	*@*)
+		_ds="${1%%@*}"
+		_snap="@${1#*@}"
+		btrfs subvolume snapshot -r "$_ds" "$_ds$_snap" >/dev/null
+		;;
+	*)
+		echo "belta snap: invalid format (expected ds@snap)" >&2
+		return 1
+		;;
+	esac
+}
+
+# belta create - create a new subvolume
+# Usage: belta create <ds>
+belta_create() {
+	if [ $# -lt 1 ]; then
+		echo "belta create: missing dataset" >&2
+		return 1
+	fi
+	btrfs subvolume create "$1"
+}
+
+# belta send - send a snapshot stream
+# Usage: belta send [-I|-i parent] <ds@snap>
+belta_send() {
+	_parent=""
+	_snap=""
+
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		-I|-i)
+			shift
+			_parent="$1"
+			shift ;;
+		-*)
+			shift ;;
+		*)
+			_snap="$1"
+			shift ;;
+		esac
+	done
+
+	if [ -z "$_snap" ]; then
+		echo "belta send: no snapshot specified" >&2
+		return 1
+	fi
+
+	if [ -n "$_parent" ]; then
+		btrfs send -p "$_parent" "$_snap"
+	else
+		btrfs send "$_snap"
+	fi
+}
+
+# belta recv - receive a snapshot stream
+# Usage: belta recv [-s ds] [flags...]
+belta_recv() {
+	_dest=""
+
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		-s)
+			shift
+			_dest="$1"
+			shift ;;
+		--recv-override)
+			shift
+			shift ;;
+		-*)
+			shift ;;
+		*)
+			_dest="$1"
+			shift ;;
+		esac
+	done
+
+	if [ -z "$_dest" ]; then
+		echo "belta recv: no destination specified" >&2
+		return 1
+	fi
+
+	# btrfs receive creates into the parent directory using the stream's embedded name
+	_parent=$(dirname "$_dest")
+	mkdir -p "$_parent"
+
+	_start=$(date +%s)
+	btrfs receive "$_parent"
+	_end=$(date +%s)
+	_elapsed=$(( _end - _start ))
+
+	# Fake ZFS recv output for AWK
+	echo "receiving full stream"
+	echo "received 0 stream in ${_elapsed} seconds"
+}
+
+# belta rename - rename a subvolume or snapshot
+# Usage: belta rename <old> <new>
+belta_rename() {
+	if [ $# -lt 2 ]; then
+		echo "belta rename: missing arguments" >&2
+		return 1
+	fi
+	mv "$1" "$2"
+}
+
+## Dispatch
+############
+
+if [ $# -lt 1 ]; then
+	echo "usage: belta <subcommand> [args...]" >&2
+	exit 1
+fi
+
+_subcmd="$1"
+shift
+
+case "$_subcmd" in
+	check)   belta_check "$@" ;;
+	list)    belta_list "$@" ;;
+	get)     belta_get "$@" ;;
+	snap)    belta_snap "$@" ;;
+	create)  belta_create "$@" ;;
+	send)    belta_send "$@" ;;
+	recv)    belta_recv "$@" ;;
+	rename)  belta_rename "$@" ;;
+	*)
+		echo "belta: unknown subcommand: $_subcmd" >&2
+		exit 1
+		;;
+esac

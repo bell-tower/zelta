@@ -1,0 +1,24 @@
+# ACTION	# REMOTE	# COMMAND	# ARGUMENTS	# VARIABLES
+# zelta-cmds.tsv		# fixed command	# fixed arguments	# array maps
+# Format:
+# ACTION: Which command to construct
+# REMOTE: Remote (ssh) prefix for SEND, RECV, DEFAULT, or blank for none
+# COMMAND: First part of the command.
+# ARGS: Hardcoded arguments.
+# VARS: List of options provided from a referenced associative array.
+#
+# Simplified for belta - belta handles its own argument parsing internally
+#
+CHECK	DEFAULT	belta check		ds
+LIST	DEFAULT	belta list		ds
+PROPS	DEFAULT	belta get		ds
+CREATE	DEFAULT	belta create		ds
+SNAP	DEFAULT	belta snap		ds_snap
+MATCH		zelta ipc-run match	--time --log-mode=text --log-level=2 -Hpo relname,match,srcnext,srclast,tgtlast	flags
+MATCH_ORIGIN		zelta ipc-run match	--log-mode=text --log-level=2 -Hpo relname,match
+CLONE	DEFAULT	echo "belta: clone not implemented" >&2; exit 1		ds_snap ds
+SEND	SEND	belta send		flags intr_snap ds_snap
+RECV	RECV	belta recv		flags origin ds
+SYNC	DEFAULT			zfs_send zfs_recv
+RENAME	DEFAULT	belta rename		old_ds new_ds
+BACKUP		zelta backup		flags source target
