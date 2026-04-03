@@ -1,11 +1,12 @@
+.*
 !.gitignore
 !.shellspec
+!.github/
+test/runners/test_generation/config/zelta_test_policy.conf
 *.swp
 *.swo
-.*
 doc/man?
 tmp
-spec/tmp
 hide.*
 *~
 \#*#
@@ -13,3 +14,6 @@ TAGS
 A*d
 .#*
 retired/
+logs
+log
+ci/*

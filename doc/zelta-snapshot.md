@@ -36,7 +36,7 @@ _endpoint_
 : Increase verbosity. Specify once for operational detail, twice (`-vv`) for debug output.
 
 **-q, \--quiet**
-: Quiet output. Specify once to suppress warnings, twice (`-qq`) to suppress errors.
+: Decrease log level. Specify once to suppress notices, twice (`-qq`) to suppress warnings.
 
 **-n, \--dryrun, \--dry-run**
 : Display `zfs` commands without executing them.

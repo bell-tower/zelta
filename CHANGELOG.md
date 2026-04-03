@@ -12,6 +12,7 @@ All notable changes to Zelta will be documented in this file.
 - **Commands**: `zelta revert` for in-place rollbacks via rename and clone.
 - **Commands**: `zelta rotate` for divergent version handling, evolved from original `--rotate` flag.
 - **Commands**: (Experimental) `zelta prune` identifies snapshots in `zfs destroy` range syntax based on replication state and a sliding window for exclusions.
+- **Installer**: (Experimental) Added a one-liner/pipe to shell installer option.
 - **Uninstaller**: Added `uninstall.sh` for clean removal of Zelta installations, including legacy paths from earlier betas.
 - **Core**: `zelta-args.awk` added as a separate data-driven argument preprocessor.
 - **Core**: `zelta-common.awk` library for centralized string and logging functions.
@@ -19,6 +20,7 @@ All notable changes to Zelta will be documented in this file.
 - **Docs**: `zelta.env` expanded with comprehensive inline documentation and examples for all major configuration categories.
 - **Docs**: New man pages: `zelta-options(7)`, `zelta-revert(8)`, `zelta-rotate(8)`, `zelta-prune(8)`.
 - **Docs**: Added tool to sync man pages with the zelta.space wiki.
+- **Testing**: Added new advanced Shellspec-based testing suite.
 
 ### Changed
 - **Architecture**: Refactored all core scripts for maintainability and simpler logic.

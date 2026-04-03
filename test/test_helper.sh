@@ -15,14 +15,43 @@
 ## Setup temporary installation for testing
 #############################################
 
-export SANDBOX_ZELTA_TMP_DIR="/tmp/zelta$$"
-export SANDBOX_ZELTA_PROCNUM="$$"
-export ZELTA_BIN="$SANDBOX_ZELTA_TMP_DIR/bin"
-export ZELTA_SHARE="$SANDBOX_ZELTA_TMP_DIR/share"
-export ZELTA_ETC="$SANDBOX_ZELTA_TMP_DIR/etc"
-export ZELTA_DOC="$SANDBOX_ZELTA_TMP_DIR/man"
-export PATH="$ZELTA_BIN:$PATH"
 
+
+setup_env() {
+    export SANDBOX_ZELTA_TMP_DIR="/tmp/zelta$$"
+    export SANDBOX_ZELTA_PROCNUM="$$"
+    export ZELTA_BIN="$SANDBOX_ZELTA_TMP_DIR/bin"
+    export ZELTA_SHARE="$SANDBOX_ZELTA_TMP_DIR/share"
+    export ZELTA_ETC="$SANDBOX_ZELTA_TMP_DIR/etc"
+    export ZELTA_DOC="$SANDBOX_ZELTA_TMP_DIR/man"
+    export PATH="$ZELTA_BIN:$PATH"
+}
+
+build_endpoints() {
+    ## Build endpoints
+    if [ -n "$SANDBOX_ZELTA_SRC_REMOTE" ]; then
+        SANDBOX_ZELTA_SRC_EP="${SANDBOX_ZELTA_SRC_REMOTE}:${SANDBOX_ZELTA_SRC_DS}"
+    else
+        SANDBOX_ZELTA_SRC_EP="$SANDBOX_ZELTA_SRC_DS"
+    fi
+
+    if [ -n "$SANDBOX_ZELTA_TGT_REMOTE" ]; then
+        SANDBOX_ZELTA_TGT_EP="${SANDBOX_ZELTA_TGT_REMOTE}:${SANDBOX_ZELTA_TGT_DS}"
+    else
+        SANDBOX_ZELTA_TGT_EP="$SANDBOX_ZELTA_TGT_DS"
+    fi
+
+    export SANDBOX_ZELTA_SRC_POOL SANDBOX_ZELTA_TGT_POOL
+    export SANDBOX_ZELTA_SRC_DS SANDBOX_ZELTA_TGT_DS
+    export SANDBOX_ZELTA_SRC_EP SANDBOX_ZELTA_TGT_EP
+}
+
+# bypass using $$ if we've manually set these vars
+if [ -z "$SANDBOX_ZELTA_TMP_DIR" ]; then
+   setup_env
+fi
+
+build_endpoints
 
 # We could use the repo dirs, but better to test installation
 # use_repo_zelta() {
@@ -31,22 +60,6 @@ export PATH="$ZELTA_BIN:$PATH"
 # 	export ZELTA_SHARE="$REPO_ROOT/share/zelta"
 # }
 
-## Build endpoints
-if [ -n "$SANDBOX_ZELTA_SRC_REMOTE" ]; then
-    SANDBOX_ZELTA_SRC_EP="${SANDBOX_ZELTA_SRC_REMOTE}:${SANDBOX_ZELTA_SRC_DS}"
-else
-    SANDBOX_ZELTA_SRC_EP="$SANDBOX_ZELTA_SRC_DS"
-fi
-
-if [ -n "$SANDBOX_ZELTA_TGT_REMOTE" ]; then
-    SANDBOX_ZELTA_TGT_EP="${SANDBOX_ZELTA_TGT_REMOTE}:${SANDBOX_ZELTA_TGT_DS}"
-else
-    SANDBOX_ZELTA_TGT_EP="$SANDBOX_ZELTA_TGT_DS"
-fi
-
-export SANDBOX_ZELTA_SRC_POOL SANDBOX_ZELTA_TGT_POOL
-export SANDBOX_ZELTA_SRC_DS SANDBOX_ZELTA_TGT_DS
-export SANDBOX_ZELTA_SRC_EP SANDBOX_ZELTA_TGT_EP
 
 
 ## Command execution wrappers
@@ -208,11 +221,13 @@ make_src_pool() {
 	tmpfile_touch "src_pool_created"
 
 	# Grant ZFS permissions for source pool
+	# original list snapshot,bookmark,send,hold
+	ZFS_SRC_PERMS=snapshot,bookmark,send,hold,clone,create,mount,canmount,mountpoint,rename,readonly
 	if [ -n "$SANDBOX_ZELTA_SRC_REMOTE" ]; then
 		#ssh -n "$SANDBOX_ZELTA_SRC_REMOTE"
-		src_exec "zfs allow -u \$USER snapshot,bookmark,send,hold $SANDBOX_ZELTA_SRC_POOL"
+		src_exec "zfs allow -u \$USER $ZFS_SRC_PERMS $SANDBOX_ZELTA_SRC_POOL"
 	else
-		zfs allow -u "$USER" snapshot,bookmark,send,hold "$SANDBOX_ZELTA_SRC_POOL"
+		sudo zfs allow -u "$USER" $ZFS_SRC_PERMS "$SANDBOX_ZELTA_SRC_POOL"
 	fi
 	return $?
 }
@@ -222,11 +237,13 @@ make_tgt_pool() {
 	tmpfile_touch "tgt_pool_created"
 	
 	# Grant ZFS permissions for target pool
+	# original list receive,mount,create,canmount,rename
+	ZFS_TGT_PERMS=receive,snapshot,bookmark,send,hold,clone,create,mount,canmount,mountpoint,rename,readonly
 	if [ -n "$SANDBOX_ZELTA_TGT_REMOTE" ]; then
 		#ssh -n "$SANDBOX_ZELTA_TGT_REMOTE" "zfs allow -u \$USER mount,create,rename $SANDBOX_ZELTA_TGT_POOL"
-		tgt_exec "zfs allow -u \$USER receive,mount,create,canmount,rename $SANDBOX_ZELTA_TGT_POOL"
+		tgt_exec "zfs allow -u \$USER $ZFS_TGT_PERMS $SANDBOX_ZELTA_TGT_POOL"
 	else
-		zfs allow -u "$USER" receive,mount,create,canmount,rename "$SANDBOX_ZELTA_TGT_POOL"
+		sudo zfs allow -u "$USER" $ZFS_TGT_PERMS "$SANDBOX_ZELTA_TGT_POOL"
 	fi
 	return $?
 }
@@ -264,13 +281,16 @@ clean_tgt_ds() {
 
 # Create divergent tree structure on source
 # Creates a dataset tree with snapshots that will diverge from target
-make_divergent_tree() {
+
+# Create divergent tree structure on source
+# Creates a dataset tree with snapshots that will diverge from target
+make_initial_tree() {
     if src_ds_exists; then
-        echo "$SANDBOX_ZELTA_TGT_DS" already exists >/dev/stderr
+        echo "$SANDBOX_ZELTA_SRC_DS" already exists >/dev/stderr
         return 1
     fi
     if tgt_ds_exists; then
-        echo "$SANDBOX_ZELTA_SRC_DS" already exists >/dev/stderr
+        echo "$SANDBOX_ZELTA_TGT_DS" already exists >/dev/stderr
         return 1
     fi
 
@@ -282,23 +302,29 @@ make_divergent_tree() {
 
 
 	# Create root dataset
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS" || return 1
-	
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS" || return 1
+
 	# Create child datasets
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub1" || return 1
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub2" || return 1
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub2/orphan" || return 1
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub3" || return 1
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub3/space\ name" || return 1
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub4" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub1" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub2" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub2/orphan" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub3" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub3/space\ name" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub4" || return 1
 	src_exec zfs create -sV 8M "$SANDBOX_ZELTA_SRC_DS/sub4/zvol" || return 1
-	src_exec zfs create -o encryption=on -o keyformat=raw -o "keylocation=file:///tmp/zfs_test_enc_key_${SANDBOX_ZELTA_PROCNUM}" "$SANDBOX_ZELTA_SRC_DS/sub4/encrypted" || return 1
-	
-	# Replicate to target with @start snapshot
-	zelta backup --snap-name @start "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP" || return 1
-	
+	src_exec zfs create -u -o encryption=on -o keyformat=raw -o "keylocation=file:///tmp/zfs_test_enc_key_${SANDBOX_ZELTA_PROCNUM}" "$SANDBOX_ZELTA_SRC_DS/sub4/encrypted" || return 1
+
+	return 0
+}
+
+# zelta backup moved to 022_setup_tree_spec as:
+#        Divergent ree tests -> setup -> can zelta backup initial tree
+# Replicate to target with @start snapshot
+# zelta backup --snap-name @start "$SANDBOX_ZELTA_SRC_EP" "$SANDBOX_ZELTA_TGT_EP" || return 1
+
+make_tree_divergence() {
 	# Generate divergence
-	src_exec zfs create "$SANDBOX_ZELTA_SRC_DS/sub1/child" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub1/child" || return 1
 	tgt_exec zfs create -u "$SANDBOX_ZELTA_TGT_DS/sub1/kid" || return 1
 	src_exec zfs destroy "$SANDBOX_ZELTA_SRC_DS/sub2@start" || return 1
 	tgt_exec zfs snapshot "$SANDBOX_ZELTA_TGT_DS/sub3/space\ name@blocker" || return 1
@@ -306,6 +332,14 @@ make_divergent_tree() {
 	src_exec zfs snapshot "$SANDBOX_ZELTA_SRC_DS/sub3@two" || return 1
 	src_exec zfs snapshot "$SANDBOX_ZELTA_SRC_DS/sub2@two" || return 1
 	tgt_exec zfs snapshot "$SANDBOX_ZELTA_TGT_DS/sub2@two" || return 1
-	
+
+	return 0
+}
+
+add_tree_delta() {
+	# make changes, we'll call this after snapshotting
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub5" || return 1
+	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub5/child1" || return 1
+
 	return 0
 }
