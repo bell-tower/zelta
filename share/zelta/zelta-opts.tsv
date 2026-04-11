@@ -82,6 +82,8 @@ match	--time	CHECK_TIME		true
 prune	--keep-snap-days	KEEP_SNAP_DAYS		set		days of older matches to skip
 prune	--keep-snap-num	KEEP_SNAP_NUM		set		number of old matches to skip
 prune	--no-ranges	NO_RANGES		true		disable range compression (output individual snapshots)
+prune	--prune-policy	PRUNE_POLICY		set		pruning strategy: trim (default), force-trim, thin, space, name
+prune	--prune-name	PRUNE_NAME		set		snapshot name pattern: zfsnap, truenas, sanoid, or custom pattern
 
 # 'zelta policy' options
 policy	--config,-C	CONFIG		set		specify the policy configuration file

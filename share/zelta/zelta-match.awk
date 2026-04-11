@@ -43,10 +43,12 @@ function usage(message,		_counter, _c, _key) {
 function usage_prune(message) {
 	STDERR = "/dev/stderr"
 	printf (message ? message "\n" : "") "usage:"                                                       > STDERR
-	print "\tprune [--keep-snap-num=N] [--keep-snap-days=N] [-X pattern] SOURCE TARGET\n"               > STDERR
+	print "\tprune [--prune-policy=POLICY] [--keep-snap-num=N] [--keep-snap-days=N] [-X pattern] SOURCE TARGET\n" > STDERR
 	print "Identifies snapshots on SOURCE that exist on TARGET.\n"                                       > STDERR
 	print "Options:"                                                                                    > STDERR
-	print "\t--keep-snap-num=N    Minimum number of snapshots to keep after match (default: 10)"        > STDERR
+	print "\t--prune-policy=POLICY Pruning strategy: trim (default), force-trim, thin, space, name"     > STDERR
+	print "\t--prune-name=NAME     Snapshot name pattern: zfsnap, truenas, sanoid, or custom"           > STDERR
+	print "\t--keep-snap-num=N    Minimum number of snapshots to keep after match (default: 100)"       > STDERR
 	print "\t--keep-snap-days=N   Minimum age in days for snapshot deletion (default: 90)"              > STDERR
 	print "\t--no-ranges          Disable range compression (output individual snapshots)"              > STDERR
 	print "\t-X pattern           Exclude datasets matching pattern\n"                                  > STDERR
