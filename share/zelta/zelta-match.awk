@@ -72,6 +72,10 @@ function add_written() {
 	return Opt["LIST_WRITTEN"] ? ",written,creation" : ""
 }
 
+function add_ivsetguid() {
+	return NeedMatchIVSet ? ",ivsetguid" : ""
+}
+
 # TO-DO: Add this feature to build_command()
 function wrap_time_cmd(cmd,		_cmd_part, _p) {
 	_cmd_part[++_p] = Opt["SH_COMMAND_PREFIX"]
@@ -88,7 +92,7 @@ function zfs_list_cmd(endpoint,		_ep, _ds, _remote, _cmd) {
 	_ep			= endpoint["ID"]
 	_ds			= endpoint["DS"]
 	_remote			= endpoint["REMOTE"]
-	_cmd_arr["props"]	= "name,guid" add_written()
+	_cmd_arr["props"]	= "name,guid" add_ivsetguid() add_written()
 	_cmd_arr["remote"]	= get_remote_cmd(endpoint)
 	_cmd_arr["ds"]		= rq(_remote, _ds)
 	if (Opt["DEPTH"])
@@ -161,13 +165,19 @@ function object_type(symbol) {
 }
 
 # Load each row into memory
-function process_row(ep,		_name, _guid, _written, _name_suffix, _ds_suffix, _savepoint,
-		     			_type, _ep_id, _ds_id, _ds_snap, _row_id, _tmp_arr, _num_snaps) {
+function process_row(ep,		_name, _guid, _ivsetguid, _written, _name_suffix, _ds_suffix, _savepoint,
+		     			_type, _ep_id, _ds_id, _ds_snap, _row_id, _tmp_arr, _num_snaps,
+					_field) {
 	# Read the row data
 	_name      = $1
 	_guid      = $2
-	_written   = $3
-	_creation  = $4
+	_field     = 2
+	if (NeedMatchIVSet)
+		_ivsetguid = $++_field
+	if (Opt["LIST_WRITTEN"]) {
+		_written   = $++_field
+		_creation  = $++_field
+	}
 
 	# Get the relative dataset suffix and then split to dataset and snapshot/bookmark name
 	_name_suffix		= substr(_name, ep["ds_length"])
@@ -198,6 +208,7 @@ function process_row(ep,		_name, _guid, _written, _name_suffix, _ds_suffix, _sav
 
 	Row[_row_id, "exists"]     = 1
 	Row[_row_id, "guid"]       = _guid
+	Row[_row_id, "ivsetguid"]  = _ivsetguid
 	Row[_row_id, "written"]    = _written
 	Row[_row_id, "creation"]   = _creation
 	Row[_row_id, "name"]       = _name
@@ -323,6 +334,8 @@ function validate_match(src_row, tgt_row, ds_suffix, savepoint, snap_idx) {
 	if (!DSPair[ds_suffix, "num_matches"]++) {
 		# TO-DO: Validate by filter
 		DSPair[ds_suffix, "match"] = savepoint
+		if (NeedMatchIVSet && Row[src_row, "ivsetguid"] && (Row[src_row, "ivsetguid"] == Row[tgt_row, "ivsetguid"]))
+			DSPair[ds_suffix, "match_ivset"] = Row[src_row, "ivsetguid"]
 		# Record match index for pruning
 		DSPair[ds_suffix, "match_idx"] = snap_idx
 	}
@@ -698,6 +711,8 @@ function load_columns(		_tsv, _key, _opt_list, _opt, _idx, _c, _default_proplist
 			_np = split(_prop_opts, _prop_opt_arr, S)
 			for (_p = 1; _p <= _np; _p++) {
 				PropList[++NumProps] = _prop_opt_arr[_p]
+				if (_prop_opt_arr[_p] == "match_ivset")
+					NeedMatchIVSet = 1
 			}
 		}
 	}
