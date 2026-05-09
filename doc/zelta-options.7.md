@@ -166,6 +166,12 @@ The following options should be modified in the environment to ensure proper ins
 **SNAP_MODE**
 :   Specify when to snapshot during a `zelta backup` operation. Options: `0` (never), `IF_NEEDED` (default, only if source has new data), or `ALWAYS`.
 
+**SNAP_TIME**
+:   In `IF_NEEDED` mode, skip snapshot creation if every source dataset has a recent enough `snapshots_changed` timestamp. Bare numbers are Unix epoch seconds and are compared directly. Relative values use a trailing `s`, `m`, `h`, `d`, or `w`; a leading `+` or `-` is ignored.
+
+**SNAP_SIZE**
+:   In `IF_NEEDED` mode, skip snapshot creation if cumulative source writes are below the threshold. Bare numbers are bytes; supported suffixes are `K`, `M`, `G`, `T`, `P`, and `E`.
+
 **SYNC_DIRECTION**
 :   If both endpoints are remote, use `PULL` (the default) or `PUSH` sync. If set to `0`, traffic will stream through the local host. Note that this feature PUSH and PULL features require appropriate ssh configurations with keys properly installed and/or ssh agent forwarding enabled.
 

@@ -291,6 +291,43 @@ function h_num(num,	_suffix, _divisors, _h) {
 	return int(num) _suffix
 }
 
+# Convert a human-readable size to bytes
+function parse_size(str,	_num, _suffix, _divisors, _idx) {
+	if (str == "") return ""
+	_num = str
+	_suffix = substr(str, length(str), 1)
+	if (_suffix ~ /^[KMGTPEkmgtpe]$/) {
+		_num = substr(str, 1, length(str) - 1)
+		_suffix = toupper(_suffix)
+	}
+	else
+		_suffix = ""
+	if (_num !~ /^[0-9][0-9]*(\.[0-9][0-9]*)?$/) return ""
+	_divisors = "KMGTPE"
+	for (_idx = 1; _idx <= index(_divisors, _suffix); _idx++)
+		_num *= 1024
+	return int(_num)
+}
+
+# Convert a relative duration to seconds
+function parse_duration(str,	_num, _suffix) {
+	if (str == "") return ""
+	if (substr(str, 1, 1) == "+" || substr(str, 1, 1) == "-")
+		str = substr(str, 2)
+	_num = str
+	_suffix = substr(str, length(str), 1)
+	if (_suffix ~ /^[smhdw]$/)
+		_num = substr(str, 1, length(str) - 1)
+	else
+		_suffix = "s"
+	if (_num !~ /^[0-9][0-9]*(\.[0-9][0-9]*)?$/) return ""
+	if (_suffix == "m") _num *= 60
+	else if (_suffix == "h") _num *= 3600
+	else if (_suffix == "d") _num *= 86400
+	else if (_suffix == "w") _num *= 604800
+	return int(_num)
+}
+
 # Constructs a remote command string
 function remote_str(endpoint, type,     _cmd) {
 	if (!Opt[endpoint "_REMOTE"]) return ""
