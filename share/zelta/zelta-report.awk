@@ -37,19 +37,20 @@ function init_endpoint(_endpoint_str) {
 # Build and run the zfs list command for the backup root
 function get_snapshot_ages(	_cmd, _remote) {
 	_remote = get_remote_cmd(BackupRoot)
-	_cmd = "zfs list -t filesystem,volume -Hpr -o name,snapshots_changed -S snapshots_changed"
+	_cmd = "zfs list -t filesystem,volume -Hpr -o name,snapshots_changed,written -S snapshots_changed"
 	_cmd = str_add(_cmd, qq(BackupRoot["DS"]))
 	if (_remote) _cmd = _remote " " dq(_cmd)
 	return _cmd
 }
 
 # Parse zfs list output and categorize datasets
-function parse_snapshot_list(	_cmd, _ds, _changed, _rel_name) {
+function parse_snapshot_list(	_cmd, _ds, _changed, _written, _rel_name) {
 	_cmd = get_snapshot_ages()
 	FS = "[\t]+"
 	while ((_cmd | getline) > 0) {
 		_ds = $1
 		_changed = $2
+		_written = $3
 		# Skip if we've already seen this dataset
 		if (_ds in SeenDS) continue
 		SeenDS[_ds] = 1
@@ -61,6 +62,8 @@ function parse_snapshot_list(	_cmd, _ds, _changed, _rel_name) {
 		if (_rel_name == BackupRoot["LEAF"] && _changed == "-") continue
 		# Skip datasets without snapshot info
 		if (_changed == "-") continue
+		# Skip datasets with no changes since their latest snapshot
+		if (_written == 0) continue
 		# Categorize by age
 		if (_changed < TooOld) {
 			OldList[++OutOfDateCount] = _rel_name
