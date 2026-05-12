@@ -74,20 +74,11 @@ function parse_snapshot_list(	_cmd, _ds, _changed, _rel_name) {
 ## Slack Notification
 #####################
 
-# Build the Slack message based on snapshot status
+# Build the Slack message for out-of-date snapshots
 function build_slack_message(	_msg, _i) {
-	_msg = "*" BackupRoot["HOST"] ":" BackupRoot["DS"] " "
-	if (!UpToDateCount && !OutOfDateCount) {
-		_msg = _msg "⚠️ no snapshots found.*"
-	} else if (!UpToDateCount) {
-		_msg = _msg "🛑 ALL snapshots are out of date!*"
-	} else if (OutOfDateCount > 0) {
-		_msg = _msg "❗️ some snapshots are out of date:* "
-		for (_i = 1; _i <= OutOfDateCount; _i++) {
-			_msg = _msg OldList[_i] " "
-		}
-	} else {
-		_msg = _msg "✅ snapshots are up to date.*"
+	_msg = "*" BackupRoot["HOST"] ":" BackupRoot["DS"] " ❗️ snapshots are out of date:* "
+	for (_i = 1; _i <= OutOfDateCount; _i++) {
+		_msg = _msg OldList[_i] " "
 	}
 	return _msg
 }
@@ -105,6 +96,7 @@ function send_slack_message(message,	_curl) {
 function process_endpoint(_endpoint_str,	_msg) {
 	init_endpoint(_endpoint_str)
 	parse_snapshot_list()
+	if (!OutOfDateCount) return
 	_msg = build_slack_message()
 	report(LOG_NOTICE, _msg)
 	send_slack_message(_msg)
