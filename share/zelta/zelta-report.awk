@@ -43,6 +43,16 @@ function get_snapshot_ages(	_cmd, _remote) {
 	return _cmd
 }
 
+# Check for direct snapshots only when dataset properties are ambiguous
+function has_snapshots(ds,	_cmd, _remote, _has_snapshots) {
+	_remote = get_remote_cmd(BackupRoot)
+	_cmd = "zfs list -Hro name -t snapshot -d 1 " qq(ds)
+	if (_remote) _cmd = _remote " " dq(_cmd)
+	_has_snapshots = ((_cmd | getline) > 0)
+	close(_cmd)
+	return _has_snapshots
+}
+
 # Parse zfs list output and categorize datasets
 function parse_snapshot_list(	_cmd, _ds, _changed, _used_by_snapshots, _rel_name) {
 	_cmd = get_snapshot_ages()
@@ -62,10 +72,12 @@ function parse_snapshot_list(	_cmd, _ds, _changed, _used_by_snapshots, _rel_name
 		if (_rel_name == BackupRoot["LEAF"] && _changed == "-") continue
 		# Skip datasets without snapshot info
 		if (_changed == "-") continue
-		# Skip datasets whose snapshots no longer retain any data
-		if (_used_by_snapshots == 0) continue
 		# Categorize by age
 		if (_changed < TooOld) {
+			if (_used_by_snapshots == 0 && !has_snapshots(_ds)) {
+				UpToDateCount++
+				continue
+			}
 			OldList[++OutOfDateCount] = _rel_name
 		} else {
 			UpToDateCount++
@@ -77,11 +89,20 @@ function parse_snapshot_list(	_cmd, _ds, _changed, _used_by_snapshots, _rel_name
 ## Slack Notification
 #####################
 
-# Build the Slack message for out-of-date snapshots
+# Build the Slack message based on snapshot status
 function build_slack_message(	_msg, _i) {
-	_msg = "*" BackupRoot["HOST"] ":" BackupRoot["DS"] " ❗️ snapshots are out of date:* "
-	for (_i = 1; _i <= OutOfDateCount; _i++) {
-		_msg = _msg OldList[_i] " "
+	_msg = "*" BackupRoot["HOST"] ":" BackupRoot["DS"] " "
+	if (!UpToDateCount && !OutOfDateCount) {
+		_msg = _msg "⚠️ no snapshots found.*"
+	} else if (!UpToDateCount) {
+		_msg = _msg "🛑 ALL snapshots are out of date!*"
+	} else if (OutOfDateCount > 0) {
+		_msg = _msg "❗️ some snapshots are out of date:* "
+		for (_i = 1; _i <= OutOfDateCount; _i++) {
+			_msg = _msg OldList[_i] " "
+		}
+	} else {
+		_msg = _msg "✅ snapshots are up to date.*"
 	}
 	return _msg
 }
@@ -99,7 +120,6 @@ function send_slack_message(message,	_curl) {
 function process_endpoint(_endpoint_str,	_msg) {
 	init_endpoint(_endpoint_str)
 	parse_snapshot_list()
-	if (!OutOfDateCount) return
 	_msg = build_slack_message()
 	report(LOG_NOTICE, _msg)
 	send_slack_message(_msg)
