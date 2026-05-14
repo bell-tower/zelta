@@ -125,10 +125,16 @@ function update_latest_snapshot(endpoint, ds_suffix, snap_name,		_idx, _src_late
 # Evaluate properties needed for snapshot decision and sync options
 function check_snapshot_needed(endpoint, ds_suffix, prop_key, prop_val) {
 	if (endpoint == "SRC") {
-		if (Dataset[endpoint, ds_suffix, "written"]) {
+		if (prop_key == "written" && prop_val) {
 			Summary["sourceWritten"] += prop_val
 			DSPair[ds_suffix, "source_is_written"] += prop_val
 			DSTree["snapshot_needed"] = SNAP_WRITTEN
+		}
+		else if (prop_key == "snapshots_changed") {
+			if (prop_val == "-" || prop_val == "")
+				DSTree["source_snapshots_changed_missing"] = 1
+			else if (!DSTree["source_snapshots_changed"] || prop_val < DSTree["source_snapshots_changed"])
+				DSTree["source_snapshots_changed"] = prop_val
 		}
 	}
 }
@@ -391,6 +397,30 @@ function compute_eligibility(           _i, _ds_suffix, _src_idx, _tgt_idx,
 ## Create snapshot with `zfs snapshot`
 ######################################
 
+# Return true when threshold data says IF_NEEDED can safely skip a snapshot
+function snapshot_thresholds_allow_skip(	_time, _size, _cutoff, _time_suffix) {
+	if (!Opt["SNAP_TIME"] && !Opt["SNAP_SIZE"])
+		return 0
+
+	if (Opt["SNAP_TIME"]) {
+		_time = parse_duration(Opt["SNAP_TIME"])
+		if (_time == "") return 0
+		if (DSTree["source_snapshots_changed_missing"]) return 0
+		if (!DSTree["source_snapshots_changed"]) return 0
+		_time_suffix = substr(Opt["SNAP_TIME"], length(Opt["SNAP_TIME"]), 1)
+		_cutoff = (_time_suffix ~ /^[smhdw]$/) ? sys_time() - _time : _time
+		if (DSTree["source_snapshots_changed"] < _cutoff) return 0
+	}
+
+	if (Opt["SNAP_SIZE"]) {
+		_size = parse_size(Opt["SNAP_SIZE"])
+		if (_size == "") return 0
+		if (Summary["sourceWritten"] >= _size) return 0
+	}
+
+	return 1
+}
+
 # Decide whether or not to take a snapshot; if so, returns a reason
 function should_snapshot(		_snapshotting) {
 	# Only attempt a snapshot once
@@ -404,6 +434,8 @@ function should_snapshot(		_snapshotting) {
 	if (Opt["SNAP_MODE"] == "ALWAYS")
 		return _snapshotting
 	else if (Opt["SNAP_MODE"] != "IF_NEEDED")
+		return 0
+	else if (DSTree["snapshot_needed"] == SNAP_WRITTEN && snapshot_thresholds_allow_skip())
 		return 0
 	else if (DSTree["snapshot_needed"] == SNAP_WRITTEN)
 		return "source is written; " _snapshotting

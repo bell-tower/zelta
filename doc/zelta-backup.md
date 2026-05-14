@@ -111,6 +111,14 @@ _target_
 **\--snap-mode** _MODE_
 : Specify when to snapshot: `NEVER` (or `0`), `IF_NEEDED` (default, only if source has new data or no recent snapshot), or `ALWAYS`.
 
+**\--snap-time** _DURATION_
+: In `IF_NEEDED` mode, skip snapshot creation if every source dataset has a recent enough `snapshots_changed` timestamp. Bare numbers are Unix epoch seconds and are compared directly. Relative values use a trailing `s`, `m`, `h`, `d`, or `w`; a leading `+` or `-` is ignored. Examples: `--snap-time 1715200000`, `--snap-time 8h`, `--snap-time -30m`.
+
+**\--snap-size** _SIZE_
+: In `IF_NEEDED` mode, skip snapshot creation if cumulative source writes are below the threshold. Bare numbers are bytes; supported suffixes are `K`, `M`, `G`, `T`, `P`, and `E`. Example: `--snap-size 128K`.
+
+`--snapshot` and `--no-snapshot` ignore `--snap-time` and `--snap-size`.
+
 ## Sync Options
 
 **-R, \--replicate**
