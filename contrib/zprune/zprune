@@ -18,7 +18,6 @@ zprune passes normal Zelta options through to `zelta prune`. The only
 zprune-specific destructive option is:
 
   -f, --force      Destroy without asking for confirmation
-  -n, --dryrun     Show zfs destroy commands without destroying
 
 Other local options:
 
@@ -29,10 +28,9 @@ Safety:
 
   - source must be local; zprune never destroys through SSH
   - candidates are selected by zelta prune using ZELTA_* defaults/options
-  - candidates are displayed before destruction unless --force is used
+  - zfs destroy -nv previews candidates before destruction
   - confirmation requires typing: destroy
   - zfs destroy -R is never used
-  - snapshots with clones block destruction
 
 Examples:
 
@@ -56,7 +54,7 @@ error() {
 
 is_local_endpoint() {
 	case "$1" in
-		*@*:*) return 1 ;;
+		*@*:*|*:*) return 1 ;;
 		*) return 0 ;;
 	esac
 }
@@ -71,11 +69,8 @@ append_prune_arg() {
 
 parse_args() {
 	ZPRUNE_FORCE=""
-	ZPRUNE_DRYRUN=""
 	ZPRUNE_SOURCE=""
-	# Destructive execution checks clone safety per snapshot, so request concrete
-	# candidates even when zelta prune would normally compress ranges.
-	ZPRUNE_PRUNE_ARGS="--no-ranges"
+	ZPRUNE_PRUNE_ARGS=""
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
@@ -87,12 +82,6 @@ parse_args() {
 				;;
 			-f|--force)
 				ZPRUNE_FORCE=1
-				shift
-				continue
-				;;
-			-n|--dryrun|--dry-run)
-				ZPRUNE_DRYRUN=1
-				append_prune_arg "$1"
 				shift
 				continue
 				;;
@@ -162,20 +151,47 @@ count_candidates() {
 	awk 'index($0, "@") { n++ } END { print n + 0 }'
 }
 
-candidate_has_clones() {
-	_candidate=$1
-	case "$_candidate" in
-		*%*)
-			return 1
-			;;
-	esac
-	_clones=$(zfs list -H -t snapshot -o clones "$_candidate" 2>/dev/null)
-	[ -n "$_clones" ] && [ "$_clones" != "-" ]
+validate_local_candidates() {
+	_candidates=$1
+	_remote=""
+	_invalid=""
+
+	IFS='
+'
+	for _candidate in $_candidates; do
+		[ -n "$_candidate" ] || continue
+		case "$_candidate" in
+			*@*:*|*:*@*)
+				_remote=$_remote$(printf '\n%s' "$_candidate")
+				;;
+			*@*)
+				;;
+			*)
+				_invalid=$_invalid$(printf '\n%s' "$_candidate")
+				;;
+		esac
+	done
+	unset IFS
+
+	if [ -n "$_remote" ]; then
+		error "refusing to destroy remote snapshot candidates:"
+		printf '%s\n' "$_remote" >&2
+		error "run zprune on the source host, or use: ssh host zprune ..."
+		return 1
+	fi
+
+	if [ -n "$_invalid" ]; then
+		error "refusing unexpected prune output:"
+		printf '%s\n' "$_invalid" >&2
+		return 1
+	fi
+
+	return 0
 }
 
-check_candidate_clones() {
+preview_candidates() {
 	_candidates=$1
-	_blocked=""
+	_failed=0
 
 	IFS='
 '
@@ -185,18 +201,16 @@ check_candidate_clones() {
 			*@*) ;;
 			*) continue ;;
 		esac
-		if candidate_has_clones "$_candidate"; then
-			_blocked=$_blocked$(printf '\n%s' "$_candidate")
+
+		printf '%s\n' "$_candidate"
+		if ! zfs destroy -nv "$_candidate"; then
+			error "preview failed: $_candidate"
+			_failed=1
 		fi
 	done
 	unset IFS
 
-	if [ -n "$_blocked" ]; then
-		error "clone safety blocks destruction for:"
-		printf '%s\n' "$_blocked" >&2
-		return 1
-	fi
-	return 0
+	return $_failed
 }
 
 confirm_destruction() {
@@ -250,16 +264,14 @@ main() {
 		exit 0
 	fi
 
-	printf '%s\n' "$_candidates"
-
-	if ! check_candidate_clones "$_candidates"; then
+	if ! validate_local_candidates "$_candidates"; then
 		error "destroy aborted"
 		exit 1
 	fi
 
-	if [ -n "$ZPRUNE_DRYRUN" ]; then
-		printf '%s\n' "$_candidates" | awk 'index($0, "@") { print "[DRYRUN] zfs destroy \047" $0 "\047" }'
-		exit 0
+	if ! preview_candidates "$_candidates"; then
+		error "destroy aborted"
+		exit 1
 	fi
 
 	if [ -z "$ZPRUNE_FORCE" ]; then

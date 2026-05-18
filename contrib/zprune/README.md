@@ -10,8 +10,8 @@
 
 1. Reserve destructive wrapper flags such as `-f` and `--force`.
 2. Pass normal Zelta options through to `zelta prune`.
-3. Request individual snapshot candidates with `--no-ranges` for clone checks.
-4. Display the candidate list.
+3. Preserve candidate ranges where `zelta prune` emits them.
+4. Preview each candidate with `zfs destroy -nv` so ZFS reports exceptions and space estimates.
 5. Destroy only after the user types `destroy`, unless `--force` is used.
 
 Retention policy, replication detection, recursion, depth limits, and exclusions belong to `zelta prune` and the `ZELTA_` option system.
@@ -41,8 +41,6 @@ zprune --keep-snap-num=60 --keep-snap-days=14 tank/data backup:tank/data
 # Use normal recursive controls from Zelta candidate selection
 zprune --depth=1 --exclude='*/tmp' tank/data backup:tank/data
 
-# Show destroy commands without destroying
-zprune -n tank/data backup:tank/data
 ```
 
 For non-destructive reporting, use `zelta prune` directly.
@@ -50,10 +48,16 @@ For non-destructive reporting, use `zelta prune` directly.
 ## Safety Model
 
 - `zprune` never destroys through SSH; the source operand must be local.
+- `zprune` refuses remote snapshot candidates before prompting.
 - `zprune` never uses `zfs destroy -R`.
-- `zprune` checks candidate snapshots for clones before destruction.
+- `zprune` previews candidates with `zfs destroy -nv` before destruction.
 - `zprune` prompts for `destroy` unless `-f` or `--force` is used.
 - Normal Zelta options are parsed by Zelta, not duplicated in `zprune`.
+
+## TODO
+
+- Add `-n` / `--dryrun` so `zprune` emits `zfs destroy` commands without passing dry-run through to `zelta prune`.
+- Compute a grand total from `zfs destroy -nvp` `would destroy` output.
 
 ## See Also
 
