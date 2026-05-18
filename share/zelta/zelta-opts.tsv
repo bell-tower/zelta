@@ -82,6 +82,7 @@ match	--time	CHECK_TIME		true
 
 # 'zelta prune' options
 prune	--keep-snap-days	KEEP_SNAP_DAYS		set		days of older matches to skip
+prune	--keep-snap-seconds	KEEP_SNAP_SECONDS		set		seconds of older matches to skip; overrides days
 prune	--keep-snap-num	KEEP_SNAP_NUM		set		number of old matches to skip
 prune	--no-ranges	NO_RANGES		true		disable range compression (output individual snapshots)
 prune	--prune-policy	PRUNE_POLICY		set		pruning strategy: trim (default), force-trim, thin, space, name
@@ -103,4 +104,3 @@ legacy		SEND_OVERRIDE	SEND_FLAGS	set			SEND_FLAGS will be deprecated. See 'zelta
 legacy		RECV_OVERRIDE	RECEIVE_FLAGS	set			RECEIVE_FLAGS will be deprecated. See 'zelta help options' for new RECV options.
 legacy		REMOTE_SEND	REMOTE_SEND_COMMAND	set
 legacy		REMOTE_RECV	REMOTE_RECV_COMMAND	set
-
