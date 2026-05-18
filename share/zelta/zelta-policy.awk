@@ -39,6 +39,76 @@ function usage(message) {
 	exit(1)
 }
 
+# Report policy parse errors with the original file, line number, and text.
+function config_usage(line_num, message,		_line) {
+	_line = ConfigLine[line_num]
+	sub(/^[ \t]+/, "", _line)
+	usage(message " at " ConfigFile[line_num] ":" ConfigFileLine[line_num] ": " _line)
+}
+
+# Return the parent directory for resolving local include fragments.
+function file_dir(path,		_dir) {
+	_dir = path
+	if (_dir !~ /\//)
+		return "."
+	sub(/\/[^\/]*$/, "", _dir)
+	return _dir ? _dir : "/"
+}
+
+# Resolve include paths relative to the file that references them.
+function resolve_include(path, base_file,		_dir) {
+	if (path ~ /^\//)
+		return path
+	_dir = file_dir(base_file)
+	return _dir "/" path
+}
+
+# Expand simple textual include fragments before parsing the policy stream.
+function load_config_lines(file, lines, files, file_lines, depth,		_arr, _base_indent, _child_file,
+						_include_file, _line, _line_num, _raw, _sub_files,
+						_sub_lines, _sub_line_nums, _sub_num, _i) {
+	if (depth > 8)
+		usage("include depth exceeded near " file)
+	if (IncludeStack[file])
+		usage("recursive include detected: " file)
+
+	IncludeStack[file] = 1
+	while ((getline _raw < file)>0) {
+		_line_num++
+		_line = _raw
+		if (split(_line, _arr, "#"))
+			_line = _arr[1]
+		sub(/[ \t]+$/, "", _line)
+
+		if (_line ~ /^[ ]*include:[[:space:]]+[^[:space:]]+/) {
+			_base_indent = _line
+			sub(/include:.*/, "", _base_indent)
+			_include_file = _line
+			sub(/^[ ]*include:[[:space:]]+/, "", _include_file)
+			_child_file = resolve_include(_include_file, file)
+
+			delete _sub_lines
+			delete _sub_files
+			delete _sub_line_nums
+			_sub_num = load_config_lines(_child_file, _sub_lines, _sub_files, _sub_line_nums, depth + 1)
+			for (_i = 1; _i <= _sub_num; _i++) {
+				lines[++lines["count"]] = _sub_lines[_i] ? _base_indent _sub_lines[_i] : ""
+				files[lines["count"]] = _sub_files[_i]
+				file_lines[lines["count"]] = _sub_line_nums[_i]
+			}
+		} else {
+			lines[++lines["count"]] = _raw
+			files[lines["count"]] = file
+			file_lines[lines["count"]] = _line_num
+		}
+	}
+	close(file)
+	delete IncludeStack[file]
+	if (!_line_num)
+		usage("empty or unreadable policy file: " file)
+	return lines["count"]
+}
+
 # Resolve the backup target path based on options and job details
 function resolve_target(tgt, opt, job,		_n, _i, _segments) {
 	if (tgt) { return tgt }
@@ -61,7 +131,7 @@ function create_backup_command(job, opts,		_key, _cmd_prefix, _cmd_arr, _src, _t
 		# Don't forward 'zelta policy' options
 		if (PolicyOptScope[_key]) continue
 		# TO-DO: Resolve flags for prettier commands?
-		else if (opts[_key])
+		else if (opts[_key] != "")
 			_cmd_prefix = str_add(_cmd_prefix, ENV_PREFIX _key "=" dq(opts[_key]))
 	}
 	# Construct command using command builder
@@ -152,14 +222,15 @@ function load_config(		_conf_error, _arr, _context, _job, _line_num,
 	# Split for YAML: Leading space, "- list item", "key: value", and "EOL:"
 	FS = "^ +|- |:[[:space:]]+|:$"
 	OFS=","
-	_conf_error = "configuration parse error at line: "
+	_conf_error = "configuration parse error"
 	BACKUP_COMMAND = "zelta backup"
 
 	_context = "global"
 	Global["BACKUP_COMMAND"] = BACKUP_COMMAND
 
-	while ((getline < Opt["CONFIG"])>0) {
-		_line_num++
+	NumConfigLines = load_config_lines(Opt["CONFIG"], ConfigLine, ConfigFile, ConfigFileLine, 0)
+	for (_line_num = 1; _line_num <= NumConfigLines; _line_num++) {
+		$0 = ConfigLine[_line_num]
 
 		# Clean up comments:
 		if (split($0, _arr, "#")) {
@@ -184,7 +255,7 @@ function load_config(		_conf_error, _arr, _context, _job, _line_num,
 
 		# Hosts:
 		} else if (/^  [^ ]+:$/) {
-			if (_context == "global") usage(_conf_error _line_num)
+			if (_context == "global") config_usage(_line_num, _conf_error)
 			_context = "host"
 			_job["host"] = $2
 			arr_copy(_site_opt, _opt)
@@ -193,10 +264,10 @@ function load_config(		_conf_error, _arr, _context, _job, _line_num,
 		} else if ($2 == "datasets") {
 			_context = "datasets"
 		} else if (/^      [^ ]+: +[^ ]/) {
-			if (_context != "options") usage(_conf_error _line_num)
+			if (_context != "options") config_usage(_line_num, _conf_error)
 			set_var(_opt, $2, $3)
-		} else if ((/^  - [^ ]/) || (/^    - [^ ]/)) {
-			if (!(_context ~ /^(datasets|host)$/)) usage(_conf_error _line_num)
+		} else if (/^ +-[[:space:]]+[^ ]/) {
+			if (!(_context ~ /^(datasets|host)$/)) config_usage(_line_num, _conf_error)
 			_job["source"] = $3
 			_job["target"] = resolve_target($4, _opt, _job)
 			if (!_job["target"]) {
@@ -210,9 +281,8 @@ function load_config(		_conf_error, _arr, _context, _job, _line_num,
 			NumJobs++
 			Job[NumJobs, "name"] = "[" _job["site"] ": " _job["target"] "] " _job["host"] ":" _job["source"]
 			Job[NumJobs, "command"]      = create_backup_command(_job, _opt)
-		} else usage(_conf_error _line_num)
+		} else config_usage(_line_num, _conf_error)
 	}
-	close(Opt["CONFIG"])
 	if (!NumJobs) {
 		if (NumOperands)
 			stop(1, "policy object(s) not found: " arr_join(Operands, ", "))

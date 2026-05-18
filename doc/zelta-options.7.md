@@ -45,6 +45,9 @@ The following options should be modified in the environment to ensure proper ins
 **ZELTA_ENV**
 :   The exact path of `zelta.env`.
 
+**ZELTA_CONFIG**
+:   The exact path of the policy configuration file. The default is `zelta.conf` under `ZELTA_ETC`.
+
 **ZELTA_DOC**
 :   The location of Zelta's manpages. Default is unset, using the system-wide manual.
 
