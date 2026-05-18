@@ -17,7 +17,7 @@ elif [ -z "$ZELTA_BIN" ] || [ -z "$ZELTA_SHARE" ] || [ -z "$ZELTA_ETC" ] || [ -z
 	: ${ZELTA_DOC:="$ZELTA_SHARE/doc"}
 fi
 
-: ${ZELTA_CONF:="$ZELTA_ETC/zelta.conf"}
+: ${ZELTA_CONFIG:="$ZELTA_ETC/zelta.conf"}
 : ${ZELTA_ENV:="$ZELTA_ETC/zelta.env"}
 ZELTA="$ZELTA_BIN/zelta"
 
@@ -61,9 +61,9 @@ if [ ! -s "$ZELTA_ENV" ]; then
 fi
 
 # Example zelta policy
-copy_file zelta.conf "${ZELTA_CONF}.example"
-if [ ! -s "$ZELTA_CONF" ]; then
-	copy_file zelta.conf "$ZELTA_CONF"
+copy_file zelta.conf "${ZELTA_CONFIG}.example"
+if [ ! -s "$ZELTA_CONFIG" ]; then
+	copy_file zelta.conf "$ZELTA_CONFIG"
 fi
 
 # Check if installed zelta will be used
