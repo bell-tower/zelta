@@ -22,6 +22,7 @@ all	--help,-h,-?	USAGE		true
 all	--dryrun,-n	DRYRUN		true		show commands but do not run them
 all	--depth,-d	DEPTH		set		limit the recursion depth
 all	--exclude,-X	EXCLUDE		list		exclude source dataset or snapshot patterns
+all	--include	INCLUDE		list		include only source dataset or snapshot patterns
 
 # Options for 'zelta backup' and other 'zfs send/recv/clone' verbs
 policy,backup,replicate,sync,rotate	--json,-j	LOG_MODE		set	json	json output
@@ -81,9 +82,14 @@ match	--no-target,--notarget	TGT_ID		false
 match	--time	CHECK_TIME		true
 
 # 'zelta prune' options
-prune	--keep-snap-days	KEEP_SNAP_DAYS		set		days of older matches to skip
-prune	--keep-snap-seconds	KEEP_SNAP_SECONDS		set		seconds of older matches to skip; overrides days
+prune	--keep-snap-time	KEEP_SNAP_TIME		set		duration of recent snapshots to keep
 prune	--keep-snap-num	KEEP_SNAP_NUM		set		number of old matches to skip
+prune	--prune-snap-time	PRUNE_SNAP_TIME		set		duration of oldest snapshots eligible to prune
+prune	--prune-snap-num	PRUNE_SNAP_NUM		set		maximum older matches eligible to prune
+prune	--prune-grid	PRUNE_GRID		set		GFS grid retention such as '24x1h | 7x1d | 4x1w'
+prune	--prune-synced	PRUNE_SYNCED		set		prune sync safety: match, always, or never
+prune	--no-prune-synced	PRUNE_SYNCED		set	never	disable target safety checks
+prune	--prune-size	PRUNE_SIZE		set		minimum snapshot used bytes worth pruning
 prune	--no-ranges	NO_RANGES		true		disable range compression (output individual snapshots)
 prune	--prune-policy	PRUNE_POLICY		set		pruning strategy: trim (default), force-trim, thin, space, name
 prune	--prune-name	PRUNE_NAME		set		snapshot name pattern: zfsnap, truenas, sanoid, or custom pattern

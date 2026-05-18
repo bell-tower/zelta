@@ -12,7 +12,7 @@ zprune_usage() {
 	cat << 'EOF'
 usage: zprune [OPTIONS] source target
 
-Destructively prune local source snapshots selected by zelta prune.
+Destructively prune source snapshots selected by zelta prune.
 
 zprune passes normal Zelta options through to `zelta prune`. The only
 zprune-specific destructive option is:
@@ -26,7 +26,7 @@ Other local options:
 
 Safety:
 
-  - source must be local; zprune never destroys through SSH
+  - remote sources are destroyed through ZELTA_REMOTE_COMMAND
   - candidates are selected by zelta prune using ZELTA_* defaults/options
   - zfs destroy -nv previews candidates before destruction
   - confirmation requires typing: destroy
@@ -35,7 +35,7 @@ Safety:
 Examples:
 
   zprune tank/data backup:tank/data
-  zprune --keep-snap-num=60 --keep-snap-days=14 tank/data backup:tank/data
+  zprune --keep-snap-num=60 --keep-snap-time=14days tank/data backup:tank/data
   zprune --depth=1 --exclude='*/tmp' -f tank/data backup:tank/data
 
 For candidate reporting without destruction, use: zelta prune
@@ -59,6 +59,18 @@ is_local_endpoint() {
 	esac
 }
 
+get_source_remote() {
+	case "$1" in
+		*@*:*) ;;
+		*:*) ;;
+		*) return ;;
+	esac
+	_remote=$1
+	_remote=${_remote%%:*}
+	[ "$_remote" = "localhost" ] && return
+	printf '%s\n' "$_remote"
+}
+
 append_prune_arg() {
 	if [ -z "$ZPRUNE_PRUNE_ARGS" ]; then
 		ZPRUNE_PRUNE_ARGS=$1
@@ -69,6 +81,8 @@ append_prune_arg() {
 
 parse_args() {
 	ZPRUNE_FORCE=""
+	ZPRUNE_SOURCE_LOCAL=""
+	ZPRUNE_SOURCE_REMOTE=""
 	ZPRUNE_SOURCE=""
 	ZPRUNE_PRUNE_ARGS=""
 
@@ -93,7 +107,7 @@ parse_args() {
 
 		if [ -z "$ZPRUNE_SOURCE" ]; then
 			case "$1" in
-				--log-level|--log-mode|--depth|-d|--exclude|-X|--keep-snap-num|--keep-snap-days|--prune-policy|--prune-name)
+				--log-level|--log-mode|--depth|-d|--exclude|-X|--include|--keep-snap-num|--keep-snap-time|--prune-snap-num|--prune-snap-time|--prune-grid|--prune-synced|--prune-size|--prune-policy|--prune-name)
 					append_prune_arg "$1"
 					shift
 					[ $# -gt 0 ] || { error "missing argument after option"; exit 1; }
@@ -127,10 +141,10 @@ parse_args() {
 		zprune_usage
 	fi
 
-	if ! is_local_endpoint "$ZPRUNE_SOURCE"; then
-		error "source must be local; SSH destruction is not permitted"
-		error "source: $ZPRUNE_SOURCE"
-		exit 1
+	if is_local_endpoint "$ZPRUNE_SOURCE"; then
+		ZPRUNE_SOURCE_LOCAL=1
+	else
+		ZPRUNE_SOURCE_REMOTE=$(get_source_remote "$ZPRUNE_SOURCE")
 	fi
 
 }
@@ -161,6 +175,9 @@ validate_local_candidates() {
 	for _candidate in $_candidates; do
 		[ -n "$_candidate" ] || continue
 		case "$_candidate" in
+			*"'"*)
+				_invalid=$_invalid$(printf '\n%s' "$_candidate")
+				;;
 			*@*:*|*:*@*)
 				_remote=$_remote$(printf '\n%s' "$_candidate")
 				;;
@@ -174,9 +191,8 @@ validate_local_candidates() {
 	unset IFS
 
 	if [ -n "$_remote" ]; then
-		error "refusing to destroy remote snapshot candidates:"
+		error "refusing unexpected remote snapshot candidates:"
 		printf '%s\n' "$_remote" >&2
-		error "run zprune on the source host, or use: ssh host zprune ..."
 		return 1
 	fi
 
@@ -187,6 +203,19 @@ validate_local_candidates() {
 	fi
 
 	return 0
+}
+
+run_zfs_destroy() {
+	_flags=$1
+	_candidate=$2
+
+	if [ -n "$ZPRUNE_SOURCE_REMOTE" ]; then
+		: ${ZELTA_REMOTE_COMMAND:=ssh}
+		_cmd="$ZELTA_REMOTE_COMMAND $ZPRUNE_SOURCE_REMOTE zfs destroy $_flags '$_candidate'"
+		eval "$_cmd"
+	else
+		zfs destroy $_flags "$_candidate"
+	fi
 }
 
 preview_candidates() {
@@ -203,7 +232,7 @@ preview_candidates() {
 		esac
 
 		printf '%s\n' "$_candidate"
-		if ! zfs destroy -nv "$_candidate"; then
+		if ! run_zfs_destroy "-nv" "$_candidate"; then
 			error "preview failed: $_candidate"
 			_failed=1
 		fi
@@ -214,11 +243,9 @@ preview_candidates() {
 }
 
 confirm_destruction() {
-	_count=$1
-
 	echo ""
-	echo "WARNING: This will permanently destroy $_count snapshot candidate(s)."
-	echo "Type 'destroy' to confirm: \c"
+	echo "WARNING: This will permanently destroy the previewed snapshot candidate(s)."
+	printf '%s' "Type 'destroy' to confirm: "
 	read _confirm < /dev/tty
 
 	if [ "$_confirm" != "destroy" ]; then
@@ -239,7 +266,7 @@ destroy_candidates() {
 			*@*) ;;
 			*) continue ;;
 		esac
-		if ! zfs destroy "$_candidate"; then
+		if ! run_zfs_destroy "" "$_candidate"; then
 			error "failed to destroy: $_candidate"
 			_failed=1
 		fi
@@ -264,6 +291,10 @@ main() {
 		exit 0
 	fi
 
+	if [ -n "$ZPRUNE_SOURCE_REMOTE" ]; then
+		error "remote source; destruction will run through ${ZELTA_REMOTE_COMMAND:-ssh}: $ZPRUNE_SOURCE_REMOTE"
+	fi
+
 	if ! validate_local_candidates "$_candidates"; then
 		error "destroy aborted"
 		exit 1
@@ -275,7 +306,7 @@ main() {
 	fi
 
 	if [ -z "$ZPRUNE_FORCE" ]; then
-		confirm_destruction "$_count"
+		confirm_destruction
 	fi
 
 	destroy_candidates "$_candidates"

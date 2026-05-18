@@ -21,7 +21,7 @@ Retention policy, replication detection, recursion, depth limits, and exclusions
 With no retention flags, `zprune` uses the same defaults as `zelta prune`:
 
 - Keep at least `ZELTA_KEEP_SNAP_NUM` snapshots, default `30`.
-- Keep snapshots newer than `ZELTA_KEEP_SNAP_DAYS`, default `30`.
+- Keep snapshots newer than `ZELTA_KEEP_SNAP_TIME`, default `30days`.
 - Only select snapshots detected as successfully replicated to the target.
 
 This means the command name and confirmation prompt are the destructive safety boundary. Extra opt-in policy flags are not required.
@@ -36,7 +36,7 @@ zprune tank/data backup:tank/data
 zprune -f tank/data backup:tank/data
 
 # Override retention through normal zelta prune options
-zprune --keep-snap-num=60 --keep-snap-days=14 tank/data backup:tank/data
+zprune --keep-snap-num=60 --keep-snap-time=14days tank/data backup:tank/data
 
 # Use normal recursive controls from Zelta candidate selection
 zprune --depth=1 --exclude='*/tmp' tank/data backup:tank/data
@@ -48,6 +48,7 @@ For non-destructive reporting, use `zelta prune` directly.
 ## Safety Model
 
 - `zprune` never destroys through SSH; the source operand must be local.
+- For a remote source, `zprune` prints `zelta prune` output and then refuses destruction.
 - `zprune` refuses remote snapshot candidates before prompting.
 - `zprune` never uses `zfs destroy -R`.
 - `zprune` previews candidates with `zfs destroy -nv` before destruction.

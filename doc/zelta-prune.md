@@ -2,130 +2,254 @@
 
 # NAME
 
-**zelta prune** - identify snapshots safe for deletion based on backup state
+**zelta prune** - report snapshot prune candidates
 
 # SYNOPSIS
 
-**zelta prune** [_OPTIONS_] _source_ _target_
+**zelta prune** [_OPTIONS_] _source_ [_target_]
 
 # DESCRIPTION
 
-**zelta prune** identifies snapshots on a source dataset that have been safely replicated to a target and are eligible for deletion based on retention policies. This command is useful for managing snapshot accumulation on production systems while ensuring backup integrity.
+**zelta prune** reports snapshots on a source dataset tree that are candidates for pruning. It is nondestructive. To destroy snapshots, use **zprune(8)** with identical prune options.
 
-**zelta prune** only suggests snapshots for deletion—it does not delete them. Output is provided in a format suitable for review before execution.
+Pruning is built from filters which describe the retention shape or narrow the dataset tree, snapshot names, target-safety requirement, or minimum useful size.
 
-As with other Zelta commands, **zelta prune** works recursively on dataset trees. Both source and target may be local or remote via **ssh(1)**.
+By default, **zelta prune** applies this failsafe filter:
 
-## Safety Criteria
+- keep the newest 30 snapshots;
+- keep snapshots newer than 30 days;
+- warn if target match safety cannot be confirmed.
 
-**WARNING:** `zelta prune` is a new feature currently in production testing and will be formally released in Zelta 1.2 (May 2026).
+Defining any explicit retention shape replaces the 30/30 default. Filters can be combined; a snapshot is reported only when all selected filters allow it.
 
-A snapshot is considered safe to prune only if:
+As with other Zelta commands, **zelta prune** works recursively on dataset trees. Source and target endpoints may be local or remote using **scp(1)**-style syntax.
 
-1. The snapshot exists on the target (has been replicated)
-2. The snapshot is older than the most recent common match point
-3. The snapshot meets the minimum retention requirements
+# RETENTION SHAPES
 
-Snapshots newer than the common match point are never suggested for deletion, as they may be needed for future incremental replication.
+The examples below show time moving left to right. `o` means kept. `x` means selected as a prune candidate.
 
-Remote endpoint names follow **scp(1)** conventions. Dataset names follow **zfs(8)** naming conventions.
+## Keep Window
+
+Keep windows count from the latest snapshots. They protect recent history and prune older history.
+
+```text
+oldest                                      latest
+x x x x x x x x x x x x x x x x x x o o o o
+                                      keep 4
+```
+
+Common options:
+
+- **--keep-snap-num** _N_: keep the newest _N_ snapshots.
+- **--keep-snap-time** _TIME_: keep snapshots newer than _TIME_.
+
+## Prune Window
+
+Prune windows count from the earliest snapshots. They select a bounded amount of old history.
+
+```text
+oldest                                      latest
+x x x x o o o o o o o o o o o o o o o o o o
+prune 4
+```
+
+Common options:
+
+- **--prune-snap-num** _N_: consider the oldest _N_ snapshots.
+- **--prune-snap-time** _TIME_: consider snapshots older than _TIME_.
+
+## GFS Grid
+
+The grid keeps sparse historical points and prunes snapshots between them.
+
+```text
+oldest                                      latest
+o x x x o x x x o x o x o x o o o o o o o o
+weekly      daily      hourly       recent
+```
+
+Grid terms use _COUNT_`x`_INTERVAL_. Delimiters are intentionally loose; commas, spaces, and vertical bars may be mixed.
+
+```sh
+zelta prune --prune-grid='24x1h | 7x1d | 4x1w | 12x1mo' source target
+```
+
+Grid intervals use the same duration syntax as **--keep-snap-time** and **--prune-snap-time**.
+
+## Duration Syntax
+
+Bare numbers are seconds. Use unambiguous units for anything else:
+
+```text
+seconds   s, sec, second, seconds
+minutes   mi, min, minute, minutes
+hours     h, hour, hours
+days      d, day, days
+weeks     w, week, weeks
+months    mo, mon, month, months
+years     y, year, years
+```
+
+The units `m` and `M` are invalid because they are ambiguous between minutes and months. Months are treated as 30 days and years as 365 days.
 
 # OPTIONS
 
-**Endpoint Arguments (Required)**
+## Endpoint Arguments
 
 _source_
-: The dataset tree containing snapshots to evaluate for pruning.
+: Dataset tree containing snapshots to evaluate.
 
 _target_
-: The backup dataset tree used to verify replication status.
+: Optional dataset tree used for target-safety checks. If the target is omitted with **--prune-synced=match** or **--prune-synced=always**, **zelta prune** emits a warning.
 
-**Output Options**
+## Retention Filters
 
-**-v, \--verbose**
-: Increase verbosity. Specify once for operational detail, twice (`-vv`) for debug output.
+**--keep-snap-num** _N_
+: Keep the newest _N_ snapshots.
 
-**-q, \--quiet**
-: Decrease log level. Specify once to suppress notices, twice (`-qq`) to suppress warnings.
+**--keep-snap-time** _TIME_
+: Keep snapshots newer than _TIME_. Bare numbers are seconds.
 
-**-n, \--dryrun, \--dry-run**
-: Display `zfs` commands without executing them.
+**--prune-snap-num** _N_
+: Consider the oldest _N_ snapshots after the match point.
 
-**Retention Options**
+**--prune-snap-time** _TIME_
+: Consider snapshots older than _TIME_. Bare numbers are seconds.
 
-**\--keep-snap-num** _N_
-: Minimum number of snapshots to keep after the match point. Default: 100.
+**--prune-grid** _GRID_
+: Apply GFS-style grid retention. Example: `24x1h | 7x1d | 4x1w`.
 
-**\--keep-snap-days** _N_
-: Minimum age in days before a snapshot is eligible for deletion. Default: 90.
+## Safety And Selection Filters
 
-**\--no-ranges**
-: Disable range compression in output. By default, consecutive snapshots are displayed as ranges (e.g., `snap1%snap5`). This option outputs individual snapshot names, one per line.
+**--prune-synced** `match`|`always`|`never`
+: Select target matching behavior. The default is `match`.
 
-**Dataset Options**
+`match`
+: Require a common source/target snapshot match when a target is supplied. Snapshots older than the match point may be reported even if each individual snapshot is not present on the target.
 
-**-d, \--depth** _LEVELS_
-: Limit recursion depth. For example, a depth of 1 includes only the specified dataset.
+`always`
+: Require each candidate to exist on the target with the same GUID and snapshot name.
 
-**-X, \--exclude** _PATTERN_
-: Exclude datasets matching the specified pattern. See **zelta-options(7)** for pattern syntax.
+`never`
+: Do not use target matching. This is local-only retention.
+
+**--no-prune-synced**
+: Equivalent to **--prune-synced=never**.
+
+**--prune-size** _SIZE_
+: Only report candidates whose snapshot `used` value is at least _SIZE_. This filter is off by default. _SIZE_ accepts byte counts and suffixes such as `K`, `M`, `G`, and `T`.
+
+**-d**, **--depth** _LEVELS_
+: Limit dataset-tree recursion depth. A depth of `1` includes only the specified dataset.
+
+**-X**, **--exclude** _PATTERN_
+: Exclude datasets or snapshots matching _PATTERN_. Snapshot patterns begin with `@`. Dataset patterns may be exact dataset names or glob patterns containing `/`.
+
+**--include** _PATTERN_
+: Include only datasets or snapshots matching _PATTERN_. This uses the same pattern style as **--exclude**.
+
+## Output Options
+
+**--no-ranges**
+: Disable range compression. By default, consecutive snapshots are emitted as ZFS snapshot ranges.
+
+**-v**, **--verbose**
+: Increase verbosity. Specify once for operational detail, twice for debug output.
+
+**-q**, **--quiet**
+: Decrease verbosity.
+
+**-n**, **--dryrun**, **--dry-run**
+: Display underlying listing commands without running them.
 
 # OUTPUT FORMAT
 
-By default, **zelta prune** outputs snapshot ranges using ZFS range syntax:
+By default, **zelta prune** outputs ZFS snapshot names or ranges, one per line:
 
-    pool/dataset@oldest_snap%newest_snap
+```text
+pool/dataset@oldest_snapshot%newest_snapshot
+```
 
-This format is compatible with `zfs destroy` for batch deletion. With `--no-ranges`, individual snapshot names are output one per line.
+With **--no-ranges**, each candidate snapshot is emitted individually:
+
+```text
+pool/dataset@snapshot
+```
+
+The output is suitable for review and for **zprune(8)**. Manual piping to **zfs destroy** is discouraged; **zprune** previews candidates with **zfs destroy -nv** and prompts before deletion.
 
 # EXAMPLES
 
-Identify prunable snapshots with default retention (100 snapshots, 90 days):
+Report candidates using the default 30/30 failsafe:
 
-    zelta prune tank/data backup-host.example:tank/backups/data
+```sh
+zelta prune tank/data backup:tank/data
+```
 
-Use stricter retention (keep 200 snapshots, 180 days minimum age):
+Preview and confirm destructive pruning with the wrapper:
 
-    zelta prune --keep-snap-num=200 --keep-snap-days=180 \
-        tank/data backup-host.example:tank/backups/data
+```sh
+zprune tank/data backup:tank/data
+```
 
-Output individual snapshots instead of ranges:
+Require every candidate to exist on the target:
 
-    zelta prune --no-ranges tank/data backup-host.example:tank/backups/data
+```sh
+zelta prune --prune-synced=always tank/data backup:tank/data
+```
 
-Review prunable snapshots, then delete after confirmation:
+Run local-only retention:
 
-    # First, review what would be deleted
-    zelta prune tank/data backup:tank/backups/data
+```sh
+zelta prune --no-prune-synced tank/data
+```
 
-    # Save to a file for review
-    zelta prune tank/data backup:tank/backups/data | tee /tmp/prune-list.txt
+Keep a larger recent window:
 
-    # Review the list carefully
-    # Use `zelta prune -v` to see matching snapshots being kept
+```sh
+zelta prune --keep-snap-num=200 --keep-snap-time=180days \
+    tank/data backup:tank/data
+```
 
-    # If satisfied, delete the replicated source snapshots
-    cat /tmp/prune-list.txt | xargs -n1 zfs destroy
+Prune only the oldest 20 snapshots:
 
-Exclude temporary datasets from consideration:
+```sh
+zelta prune --prune-snap-num=20 tank/data backup:tank/data
+```
 
-    zelta prune -X '*/tmp' tank/data backup:tank/backups/data
+Apply GFS-style retention:
+
+```sh
+zelta prune --prune-grid='24x1h | 7x1d | 4x1w | 12x1mo' \
+    tank/data backup:tank/data
+```
+
+Exclude temporary datasets and include only daily snapshots:
+
+```sh
+zelta prune --exclude='*/tmp' --include='@daily-*' \
+    tank/data backup:tank/data
+```
+
+Only report candidates using at least 1 GiB:
+
+```sh
+zelta prune --prune-size=1G tank/data backup:tank/data
+```
 
 # EXIT STATUS
 
-Returns 0 on success, non-zero on error.
+Returns 0 on success and non-zero on error.
 
 # NOTES
 
-**zelta prune** is experimental. Always review output before executing deletions. Deleting snapshots is irreversible.
+**zelta prune** is under active development for the BSDCan 2026 prune workflow. Review output carefully before destructive use.
 
-This command is driven by the **zelta match** comparison engine. See **zelta-match(8)** for details on how source and target snapshots are compared.
-
-See **zelta-options(7)** for environment variables and `zelta.env` configuration.
+This command is driven by the same comparison engine as **zelta match**. See **zelta-match(8)** for source/target matching behavior.
 
 # SEE ALSO
 
-zelta(8), zelta-options(7), zelta-match(8), zelta-backup(8), zfs(8), zfs-destroy(8)
+**zelta(8)**, **zprune(8)**, **zelta-options(7)**, **zelta-match(8)**, **zelta-backup(8)**, **zfs(8)**, **zfs-destroy(8)**
 
 # AUTHORS
 

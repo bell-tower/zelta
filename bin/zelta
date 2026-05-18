@@ -175,8 +175,7 @@ zelta_init() {
 	: ${ZELTA_CLONE_DEFAULT:="-po readonly=off"}
 
 	# `zelta match` defaults
-	: ${ZELTA_KEEP_SNAP_NUM:="30"}
-	: ${ZELTA_KEEP_SNAP_DAYS:="30"}
+	: ${ZELTA_PRUNE_SYNCED:="match"}
 
 	# Remote (ssh) options
 	: ${ZELTA_REMOTE_COMMAND:="ssh"}
