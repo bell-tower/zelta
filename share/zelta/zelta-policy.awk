@@ -39,6 +39,13 @@ function usage(message) {
 	exit(1)
 }
 
+# Report policy parse errors with the original file, line number, and text.
+function config_usage(line_num, message,		_line) {
+	_line = ConfigLine[line_num]
+	sub(/^[ \t]+/, "", _line)
+	usage(message " at " ConfigFile[line_num] ":" ConfigFileLine[line_num] ": " _line)
+}
+
 # Return the parent directory for resolving local include fragments.
 function file_dir(path,		_dir) {
 	_dir = path
@@ -57,8 +64,9 @@ function resolve_include(path, base_file,		_dir) {
 }
 
 # Expand simple textual include fragments before parsing the policy stream.
-function load_config_lines(file, lines, depth,		_arr, _base_indent, _child_file, _include_file,
-						_line, _line_num, _raw, _sub_lines, _sub_num, _i) {
+function load_config_lines(file, lines, files, file_lines, depth,		_arr, _base_indent, _child_file,
+						_include_file, _line, _line_num, _raw, _sub_files,
+						_sub_lines, _sub_line_nums, _sub_num, _i) {
 	if (depth > 8)
 		usage("include depth exceeded near " file)
 	if (IncludeStack[file])
@@ -80,15 +88,18 @@ function load_config_lines(file, lines, depth,		_arr, _base_indent, _child_file,
 			_child_file = resolve_include(_include_file, file)
 
 			delete _sub_lines
-			_sub_num = load_config_lines(_child_file, _sub_lines, depth + 1)
+			delete _sub_files
+			delete _sub_line_nums
+			_sub_num = load_config_lines(_child_file, _sub_lines, _sub_files, _sub_line_nums, depth + 1)
 			for (_i = 1; _i <= _sub_num; _i++) {
-				if (_sub_lines[_i])
-					lines[++lines["count"]] = _base_indent _sub_lines[_i]
-				else
-					lines[++lines["count"]] = ""
+				lines[++lines["count"]] = _sub_lines[_i] ? _base_indent _sub_lines[_i] : ""
+				files[lines["count"]] = _sub_files[_i]
+				file_lines[lines["count"]] = _sub_line_nums[_i]
 			}
 		} else {
 			lines[++lines["count"]] = _raw
+			files[lines["count"]] = file
+			file_lines[lines["count"]] = _line_num
 		}
 	}
 	close(file)
@@ -211,13 +222,13 @@ function load_config(		_conf_error, _arr, _context, _job, _line_num,
 	# Split for YAML: Leading space, "- list item", "key: value", and "EOL:"
 	FS = "^ +|- |:[[:space:]]+|:$"
 	OFS=","
-	_conf_error = "configuration parse error at line: "
+	_conf_error = "configuration parse error"
 	BACKUP_COMMAND = "zelta backup"
 
 	_context = "global"
 	Global["BACKUP_COMMAND"] = BACKUP_COMMAND
 
-	NumConfigLines = load_config_lines(Opt["CONFIG"], ConfigLine, 0)
+	NumConfigLines = load_config_lines(Opt["CONFIG"], ConfigLine, ConfigFile, ConfigFileLine, 0)
 	for (_line_num = 1; _line_num <= NumConfigLines; _line_num++) {
 		$0 = ConfigLine[_line_num]
 
@@ -244,7 +255,7 @@ function load_config(		_conf_error, _arr, _context, _job, _line_num,
 
 		# Hosts:
 		} else if (/^  [^ ]+:$/) {
-			if (_context == "global") usage(_conf_error _line_num)
+			if (_context == "global") config_usage(_line_num, _conf_error)
 			_context = "host"
 			_job["host"] = $2
 			arr_copy(_site_opt, _opt)
@@ -253,10 +264,10 @@ function load_config(		_conf_error, _arr, _context, _job, _line_num,
 		} else if ($2 == "datasets") {
 			_context = "datasets"
 		} else if (/^      [^ ]+: +[^ ]/) {
-			if (_context != "options") usage(_conf_error _line_num)
+			if (_context != "options") config_usage(_line_num, _conf_error)
 			set_var(_opt, $2, $3)
 		} else if (/^ +-[[:space:]]+[^ ]/) {
-			if (!(_context ~ /^(datasets|host)$/)) usage(_conf_error _line_num)
+			if (!(_context ~ /^(datasets|host)$/)) config_usage(_line_num, _conf_error)
 			_job["source"] = $3
 			_job["target"] = resolve_target($4, _opt, _job)
 			if (!_job["target"]) {
@@ -270,7 +281,7 @@ function load_config(		_conf_error, _arr, _context, _job, _line_num,
 			NumJobs++
 			Job[NumJobs, "name"] = "[" _job["site"] ": " _job["target"] "] " _job["host"] ":" _job["source"]
 			Job[NumJobs, "command"]      = create_backup_command(_job, _opt)
-		} else usage(_conf_error _line_num)
+		} else config_usage(_line_num, _conf_error)
 	}
 	if (!NumJobs) {
 		if (NumOperands)
