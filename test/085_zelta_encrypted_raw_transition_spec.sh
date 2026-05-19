@@ -19,6 +19,14 @@ enc_raw_init() {
 	fi
 }
 
+enc_create_key_for_src_and_tgt() {
+    dd if=/dev/urandom bs=32 count=1 of="$EncRawKey" 2>/dev/null
+    chmod 600 "$EncRawKey"
+    scp -p "$EncRawKey" "$SANDBOX_ZELTA_SRC_REMOTE:$EncRawKey"
+    scp -p "$EncRawKey" "$SANDBOX_ZELTA_TGT_REMOTE:$EncRawKey"	
+}
+
+
 enc_raw_cleanup() {
 	enc_raw_init
 	tgt_exec zfs destroy -r "$EncRawTgtDS" >/dev/null 2>&1 || :
@@ -31,7 +39,7 @@ enc_raw_cleanup() {
 enc_raw_setup() {
 	enc_raw_init
 	enc_raw_cleanup || return 1
-	src_exec dd if=/dev/urandom bs=32 count=1 of="$EncRawKey" >/dev/null 2>&1 || return 1
+	enc_create_key_for_src_and_tgt
 	src_exec zfs create -u -o encryption=on -o keyformat=raw -o "keylocation=file://$EncRawKey" "$EncRawSrcDS" || return 1
 	return 0
 }
@@ -48,7 +56,7 @@ enc_raw_snapshot_backup_raw() {
 }
 
 enc_raw_load_target_key() {
-	enc_raw_init
+        enc_raw_init
 	tgt_exec zfs load-key -L "file://$EncRawKey" "$EncRawTgtDS"
 }
 
@@ -67,7 +75,7 @@ enc_raw_snapshot_backup_fallback_nonraw() {
 Describe 'Encrypted raw-send transition'
 	Skip if 'SANDBOX_ZELTA_SRC_DS undefined' test -z "$SANDBOX_ZELTA_SRC_DS"
 	Skip if 'SANDBOX_ZELTA_TGT_DS undefined' test -z "$SANDBOX_ZELTA_TGT_DS"
-	Skip if 'requires shared source and target key path' test -n "$SANDBOX_ZELTA_SRC_REMOTE" -a -n "$SANDBOX_ZELTA_TGT_REMOTE" -a "$SANDBOX_ZELTA_SRC_REMOTE" != "$SANDBOX_ZELTA_TGT_REMOTE"
+	Skip if 'requires separate source and target remotes' test -z "$SANDBOX_ZELTA_SRC_REMOTE" -o -z "$SANDBOX_ZELTA_TGT_REMOTE" -o "$SANDBOX_ZELTA_SRC_REMOTE" = "$SANDBOX_ZELTA_TGT_REMOTE"
 
 	It 'creates an encrypted dataset with a key file'
 		When call enc_raw_setup
