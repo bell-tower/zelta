@@ -61,6 +61,7 @@ policy,backup,replicate,sync,rotate	-h	USAGE		true		option '-h' is ambiguous; us
 policy,backup,replicate,sync	-I,--intermediate	SEND_INTR	INTERMEDIATE	true		intermediate mode: sync all possible snapshots
 policy,backup,replicate,sync	-i,--incremental	SEND_INTR	INTERMEDIATE	false		incremental mode: sync only the latest snapshots
 policy,backup,replicate,sync	--send-default	SEND_DEFAULT		set
+policy,backup,sync	--send-decrypted	SEND_DECRYPTED		set
 policy,backup,replicate,sync	--send-raw	SEND_RAW		set
 policy,backup,replicate,sync	--send-new	SEND_NEW		set
 policy,backup,replicate,sync	--recv-default	RECV_DEFAULT		set
@@ -103,4 +104,3 @@ legacy		SEND_OVERRIDE	SEND_FLAGS	set			SEND_FLAGS will be deprecated. See 'zelta
 legacy		RECV_OVERRIDE	RECEIVE_FLAGS	set			RECEIVE_FLAGS will be deprecated. See 'zelta help options' for new RECV options.
 legacy		REMOTE_SEND	REMOTE_SEND_COMMAND	set
 legacy		REMOTE_RECV	REMOTE_RECV_COMMAND	set
-
