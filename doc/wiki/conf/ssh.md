@@ -309,7 +309,7 @@ If you encounter issues with SSH configuration:
 
 For Zelta-specific questions, see:
 
-- [Zelta Documentation](https://zelta.space/docs/home/)
+- [Zelta Documentation](https://zelta.space/docs/)
 - [GitHub Issues](https://github.com/bell-tower/zelta/issues)
 - [Bell Tower Contact Form](https://belltower.it/contact/)
 

@@ -62,7 +62,7 @@ Treat these as high-risk: `zprune -f`, forced backup/rebase/receive modes such a
 
 ## References
 
-- Docs and wiki: https://zelta.space/home/
+- Docs and wiki: https://zelta.space/docs/
 - Source: https://github.com/bell-tower/zelta
 - Repo skill source: https://github.com/bell-tower/zelta/tree/main/contrib/agent-skills/zelta/SKILL.md
 - Online skill index: https://zelta.space/.well-known/agent-skills/index.json

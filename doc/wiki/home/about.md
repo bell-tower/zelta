@@ -10,13 +10,13 @@
 >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  ![ShellSpec Tests](https://github.com/bell-tower/zelta/actions/workflows/shellspec.yml/badge.svg)
 ---
 
-[zelta.space](https://zelta.space) | [Documentation](https://zelta.space/docs/home/) | [GitHub](https://github.com/bell-tower/zelta)
+[zelta.space](https://zelta.space) | [Documentation](https://zelta.space/docs/) | [GitHub](https://github.com/bell-tower/zelta)
 
 **Zelta** provides bulletproof backups that meet strict compliance requirements while remaining straightforward to deploy and operate. It transforms complex backup and recovery operations into safe, auditable commands—protecting your data without requiring specialized expertise.
 
 Zelta orchestrates backup operations across any modern Unix system. It has been battle-tested in production for over six years, managing tens of millions of snapshots across thousands of systems—with zero package dependencies.
 
-> **Zelta requires ZFS.** If ZFS isn't yet part of your workflow, it's easier than ever to improve your infrastructure with ZFS and Zelta. See [Getting Started with ZFS](https://zelta.space/conf/zfs) to begin.
+> **Zelta requires ZFS.** If ZFS isn't yet part of your workflow, it's easier than ever to improve your infrastructure with ZFS and Zelta. See [Getting Started with ZFS](https://zelta.space/docs/conf/zfs/) to begin.
 
 ---
 

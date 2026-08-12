@@ -162,4 +162,4 @@ Replication decisions are based on ZFS metadata and available features, not nami
 
 Ready to try Zelta? Head over to [First Backup](/docs/start/) for practical examples.
 
-For detailed command usage, run `zelta help` or explore the [Zelta Wiki](https://zelta.space/docs/home/).
+For detailed command usage, run `zelta help` or explore the [Zelta documentation](https://zelta.space/docs/).
