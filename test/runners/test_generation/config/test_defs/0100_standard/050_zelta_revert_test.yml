@@ -27,9 +27,9 @@ example_list:
         when_command: run zelta snapshot --snap-name "another_test" "$SANDBOX_ZELTA_SRC_EP"
 
       - test_name: revert
-        it_desc: revert to last snapshot (ignore warnings) - %{when_command}
+        it_desc: revert to last snapshot (diagnostic logging) - %{when_command}
         allow_no_output: true
-        when_command: run zelta revert -qq "$SANDBOX_ZELTA_SRC_EP"@manual_test
+        when_command: run env ZELTA_LOG_LEVEL=4 zelta revert "$SANDBOX_ZELTA_SRC_EP"@manual_test
 
       - test_name: rotate_after_revert
         it_desc: rotates after divergence - %{when_command}
