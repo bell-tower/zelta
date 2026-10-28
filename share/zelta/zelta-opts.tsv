@@ -66,7 +66,7 @@ policy,backup,replicate,sync,rotate,failover	--bookmark-prefix	BOOKMARK_PREFIX		
 backup,clone,rebase,failover	--target-origin,--origin	ORIGIN_ID		set		clone origin dataset already backed up on the target
 
 # 'zelta revert' options
-revert	--force,-f	REVERT_FORCE		true		skip revert preflight; may leave a partially recreated tree
+revert	--force,-f	REVERT_FORCE		true		attempt best-effort revert of an incomplete tree
 
 # 'zelta rebase' options
 rebase	--rebase-file	REBASE_FILE		set		override path to preserve file

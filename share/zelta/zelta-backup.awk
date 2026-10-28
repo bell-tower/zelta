@@ -83,7 +83,7 @@ function usage(message,		_ep_spec, _verb, _clone, _revert) {
 			print "  -i, --incremental          Incremental sync"      > STDERR
 		print "  -d, --depth NUM            Set max dataset depth"     > STDERR
 		if (_revert)
-			print "  -f, --force                Skip whole-tree revert preflight" > STDERR
+			print "  -f, --force                Best-effort recursive revert" > STDERR
 		if (_verb == "backup")
 			print "  --target-origin ENDPOINT   Back up an existing clone" > STDERR
 	}
@@ -1422,9 +1422,11 @@ function run_rotate(		_src_ds_snap, _up_to_date, _src_origin_ds, _origin_arr, _n
 
 function create_recursive_clone(endpoint, origin_ds, new_ds,		_remote, _user_snap, _i, _ds_suffix, _cmd_arr,
 																																							_cmd, _idx, _last_snap, _snap, _origin_ds_snap,
-																																					_clone_ds, _clone_count, _success_count, _cmd_status, _clone_action) {
+																																					_clone_ds, _clone_count, _success_count, _cmd_status, _clone_action,
+						_best_effort, _restored, _parent, _blocked, _failed_count, _skipped_count) {
 	_remote			= Opt[endpoint"_REMOTE"]
 	_user_snap		= Opt[endpoint"_SNAP"]
+	_best_effort = (Opt["VERB"] == "revert" && Opt["REVERT_FORCE"])
 	for (_i = 1; _i <= NumDS; _i++) {
 		_ds_suffix		= DSList[_i]
 		_idx			= endpoint SUBSEP _ds_suffix
@@ -1433,6 +1435,25 @@ function create_recursive_clone(endpoint, origin_ds, new_ds,		_remote, _user_sna
 		_origin_ds_snap		= origin_ds _ds_suffix _snap
 		_clone_ds		= new_ds _ds_suffix
 
+		# Do not let clone -p invent empty parents for an unrestored branch.
+		if (_best_effort) {
+			_parent = _ds_suffix
+			_blocked = 0
+			while (sub(/\/[^\/]*$/, "", _parent)) {
+				if (!(_parent in _restored)) {
+					_blocked = 1
+					break
+				}
+			}
+			if (_blocked || !_last_snap) {
+				_skipped_count++
+				if (_blocked)
+					report(LOG_ERROR, "skipping clone '" _clone_ds "': parent '" new_ds _parent "' was not restored")
+				else
+					report(LOG_ERROR, "skipping clone '" _clone_ds "': no source snapshot")
+				continue
+			}
+		}
 		if (!_last_snap) continue
 		_clone_count++
 		_cmd_arr["ds_snap"]	= rq(_remote, _origin_ds_snap)
@@ -1443,24 +1464,45 @@ function create_recursive_clone(endpoint, origin_ds, new_ds,		_remote, _user_sna
 		report(LOG_INFO, _clone_action _cmd_arr["ds_snap"])
 		if (Opt["DRYRUN"]) {
 			report(LOG_NOTICE, "+ " _cmd)
+			_restored[_ds_suffix] = 1
 			continue
 		}
 		report(LOG_DEBUG, "`"_cmd"`")
-		_cmd			= _cmd CAPTURE_OUTPUT
+		# Some original-awk versions discard close(pipe)'s exit status.
+		# Carry the clone status in-band so failures are portable.
+		_cmd = "{ " _cmd CAPTURE_OUTPUT "; printf '\\nZELTA_CLONE_STATUS=%s\\n' \"$?\"; }"
+		_cmd_status = 1
 		FS="[[:space:]]"
 		while (_cmd | getline) {
-			if (/encryption key not loaded/) report(LOG_INFO, "to mount " clone_ds " load encryption key in " $NF)
+			if (/^ZELTA_CLONE_STATUS=[0-9]+$/)
+				_cmd_status = substr($0, index($0, "=") + 1) + 0
+			else if ($0 == "") continue
+			else if (/encryption key not loaded/) report(LOG_INFO, "to mount " _clone_ds " load encryption key in " $NF)
 			else report(LOG_WARNING, "unexpected 'zfs clone' output: " $0)
 		}
-		_cmd_status = close(_cmd)
-		if (_cmd_status)
-			stop(1, "error creating clone '" _clone_ds "'")
+		close(_cmd)
+		if (_cmd_status) {
+			if (!_best_effort)
+				stop(1, "error creating clone '" _clone_ds "'")
+			report(LOG_ERROR, "error creating clone '" _clone_ds "'")
+			_failed_count++
+			continue
+		}
 		_success_count++
+		_restored[_ds_suffix] = 1
 	}
 	if (_clone_count)
 		report(LOG_NOTICE, (Opt["DRYRUN"] ? "would clone " _clone_count : "cloned " _success_count) "/" NumDS " datasets to " new_ds)
 	else
 		report(LOG_NOTICE, "no source snapshots to clone")
+	if (_best_effort && (_failed_count || _skipped_count)) {
+		if (Opt["DRYRUN"])
+			report(LOG_ERROR, "revert would be incomplete: " (_clone_count + 0) " planned, " (_skipped_count + 0) " skipped; original tree would be preserved at '" origin_ds "'")
+		else
+			report(LOG_ERROR, "revert incomplete: " (_success_count + 0) " cloned, " (_failed_count + 0) " failed, " (_skipped_count + 0) " skipped; original tree preserved at '" origin_ds "'")
+		return _failed_count + _skipped_count
+	}
+	return 0
 }
 
 function run_clone_shuffle() {
@@ -1526,13 +1568,16 @@ function validate_revert_tree(		_cmd_arr, _cmd, _line, _status, _invalid, _avail
 
 function run_revert(		_ds, _followup) {
 	if (Opt["REVERT_FORCE"])
-		report(LOG_WARNING, "skipping revert preflight; the original tree is preserved, but cloning may stop partway")
+		report(LOG_WARNING, "forcing best-effort revert; failed or skipped datasets remain in the preserved tree")
 	else
 		validate_revert_tree()
 	# Disable snapshot
 	# TO-DO: Add a mechanism to revert to the previous (rather than named) snapshot
 	_ds = rename_dataset("SRC")
-	create_recursive_clone("SRC", _ds, Opt["SRC_DS"])
+	if (create_recursive_clone("SRC", _ds, Opt["SRC_DS"])) {
+		Summary["replicationErrorCode"] = 1
+		return
+	}
 	create_source_snapshot(Opt["DRYRUN"] ? "would snapshot: " : "snapshotting: ")
 	_followup = "zelta rotate '" Opt["SRC_DS"] "' 'TARGET'"
 	if (Opt["DRYRUN"])

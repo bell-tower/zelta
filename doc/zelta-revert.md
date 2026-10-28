@@ -55,7 +55,7 @@ _endpoint_
 **Revert Safety Override**
 
 **-f, \--force**
-: Skip the whole-tree preflight and use the previous rename-and-clone behavior. The original tree is still preserved, but cloning may fail partway, leaving some children only under the preserved path. This does not ignore clone failures, overwrite datasets, or force a receive. Inspect both paths after any failure. Dry runs also require this option to display an otherwise blocked plan.
+: Skip the whole-tree preflight and attempt a best-effort revert. Clone failures do not stop unaffected siblings. A dataset without a source snapshot is skipped; descendants of any failed or skipped parent are also skipped rather than creating empty replacement parents. The original tree is preserved in full, including every failed or skipped dataset. Zelta reports those paths and the preserved-tree location, and exits non-zero if the result is incomplete. It does not snapshot an incomplete result or recommend rotating it. This option never overwrites datasets or forces a receive. Dry runs also require this option to display an otherwise blocked plan; execution may reveal failures a dry run cannot predict.
 
 # EXAMPLES
 
@@ -77,7 +77,7 @@ After reverting a source dataset, rotate its backup targets to restore sync cont
 The original diverged datasets remain accessible as `sink/source/dataset_<snapshot>` and `tank/target/dataset_<snapshot>`.
 
 # EXIT STATUS
-Returns 0 on success, non-zero on error.
+Returns 0 on success, non-zero on error. A forced best-effort revert also returns non-zero if any selected dataset failed or was skipped, even when other datasets were restored successfully. Inspect the reported paths before continuing a workflow that replaces intentionally omitted children.
 
 # NOTES
 See **zelta-options(7)** for environment variables, `zelta.env` configuration, and `zelta policy` integration.
