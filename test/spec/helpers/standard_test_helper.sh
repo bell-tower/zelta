@@ -366,6 +366,25 @@ make_tree_divergence() {
 	return 0
 }
 
+# Confirm a blocked revert leaves every original dataset at its original path.
+reject_mixed_revert_tree() {
+	_before=$(src_exec zfs list -Hro name,guid "$SANDBOX_ZELTA_SRC_DS") || return 1
+	if zelta revert -qq "$SANDBOX_ZELTA_SRC_EP"@manual_test; then
+		return 1
+	fi
+	_after=$(src_exec zfs list -Hro name,guid "$SANDBOX_ZELTA_SRC_DS") || return 1
+	[ "$_before" = "$_after" ] || return 1
+	if src_exec zfs list "$SANDBOX_ZELTA_SRC_DS"_manual_test >/dev/null 2>&1; then
+		return 1
+	fi
+	return 0
+}
+
+# Explicitly preserve the newer subtree so the remaining tree can revert cleanly.
+preserve_new_revert_children() {
+	src_exec zfs rename "$SANDBOX_ZELTA_SRC_DS/sub5" "${SANDBOX_ZELTA_SRC_DS}_post_snapshot"
+}
+
 add_tree_delta() {
 	# make changes, we'll call this after snapshotting
 	src_exec zfs create -u "$SANDBOX_ZELTA_SRC_DS/sub5" || return 1

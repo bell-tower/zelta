@@ -105,8 +105,19 @@ Describe 'Test revert' standard:50
     The status should be success
   End
 
-  It "revert to last snapshot (diagnostic logging) - run env ZELTA_LOG_LEVEL=4 zelta revert \"$SANDBOX_ZELTA_SRC_EP\"@manual_test"
-    When run env ZELTA_LOG_LEVEL=4 zelta revert "$SANDBOX_ZELTA_SRC_EP"@manual_test
+  It "rejects a mixed-snapshot tree without renaming or replacing datasets"
+    When call reject_mixed_revert_tree
+    The error should equal "error: cannot revert tree: missing snapshot '$SANDBOX_ZELTA_SRC_DS/sub5@manual_test'; revert eligible children individually"
+    The status should be success
+  End
+
+  It "explicitly preserves the newer children outside the tree to be reverted"
+    When call preserve_new_revert_children
+    The status should be success
+  End
+
+  It "reverts the coherent remaining tree - run zelta revert -qq \"$SANDBOX_ZELTA_SRC_EP\"@manual_test"
+    When run zelta revert -qq "$SANDBOX_ZELTA_SRC_EP"@manual_test
     The status should be success
   End
 

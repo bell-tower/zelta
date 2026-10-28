@@ -15,6 +15,8 @@ As with other Zelta commands, **zelta revert** works recursively on a dataset tr
 
 After reverting, the original dataset remains accessible under a new name, allowing you to examine both the reverted state and the preserved current state.
 
+Before renaming anything, Zelta checks that every dataset in the tree is included in the revert plan and has its selected snapshot. If a child was created after the requested snapshot, lacks a snapshot, or is excluded by a filter or depth limit, the entire revert is rejected. Revert eligible child endpoints individually instead of rewinding a mixed-snapshot tree.
+
 ## Revert Process
 
 **zelta revert** performs these operations:
@@ -49,6 +51,11 @@ _endpoint_
 
 **-n, \--dryrun, \--dry-run**
 : Display `zfs` commands without executing them.
+
+**Revert Safety Override**
+
+**-f, \--force**
+: Skip the whole-tree preflight and use the previous rename-and-clone behavior. The original tree is still preserved, but cloning may fail partway, leaving some children only under the preserved path. This does not ignore clone failures, overwrite datasets, or force a receive. Inspect both paths after any failure. Dry runs also require this option to display an otherwise blocked plan.
 
 # EXAMPLES
 

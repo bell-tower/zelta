@@ -29,6 +29,7 @@ All notable changes to Zelta will be documented in this file.
 - **Testing**: ShellSpec CI workflow, prune/policy/rebase/encrypted-transition coverage, generated test helpers, golden-pool prune scenarios, and VM test-runner documentation.
 
 ### Changed
+- **Revert**: Validate the entire tree and selected snapshots before renaming; reject incomplete recursive rewinds. `--force` / `-f` retains the previous potentially partial rename-and-clone behavior without overwriting the preserved tree.
 - **Prune**: Clarified endpoint roles: acted-on `ENDPOINT` vs optional `--match-endpoint=GUARD` (aliases `--guard-endpoint`, `--prune-guard-endpoint`). Second positional match peer still accepted. `zprune` requires `--match-endpoint` or `--no-prune-guard`.
 - **Prune**: Reworked `zelta prune` into a nondestructive candidate planner with explicit retention filters, target guard modes, default 30/30 failsafe behavior, and range-compressed output.
 - **Prune**: Added GFS-style `--prune-grid`, reclaim-target `--prune-size`, `--prune-guard=latest|unsynced|none`, `--no-prune-guard`, `--no-ranges`, multi-dataset visual output, and name/policy pruning controls.

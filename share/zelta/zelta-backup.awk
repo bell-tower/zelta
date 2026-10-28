@@ -82,6 +82,8 @@ function usage(message,		_ep_spec, _verb, _clone, _revert) {
 		if (_verb == "backup")
 			print "  -i, --incremental          Incremental sync"      > STDERR
 		print "  -d, --depth NUM            Set max dataset depth"     > STDERR
+		if (_revert)
+			print "  -f, --force                Skip whole-tree revert preflight" > STDERR
 		if (_verb == "backup")
 			print "  --target-origin ENDPOINT   Back up an existing clone" > STDERR
 	}
@@ -1484,7 +1486,49 @@ function run_clone_shuffle() {
 	run_backup()
 }
 
+# A rename moves every descendant, even ones excluded from the clone plan.
+# Validate the whole tree before moving anything out of its original path.
+function validate_revert_tree(		_cmd_arr, _cmd, _line, _status, _invalid, _available, _datasets,
+						_i, _ds, _snap, _selected) {
+	_cmd_arr["endpoint"] = "SRC"
+	_cmd_arr["ds"] = rq(Opt["SRC_REMOTE"], Opt["SRC_DS"])
+	_cmd_arr["props"] = "name"
+	_cmd_arr["flags"] = "-t filesystem,volume,snapshot"
+	_cmd = build_command("LIST", _cmd_arr)
+	report(LOG_DEBUG, "`" _cmd "`")
+	_cmd = _cmd CAPTURE_OUTPUT
+	while ((_cmd | getline _line) > 0) {
+		if (_line != Opt["SRC_DS"] && index(_line, Opt["SRC_DS"] "/") != 1 && index(_line, Opt["SRC_DS"] "@") != 1) {
+			_invalid = 1
+			continue
+		}
+		_available[_line] = 1
+		if (!index(_line, "@")) _datasets[_line] = 1
+	}
+	_status = close(_cmd)
+	if (_status || _invalid || !_datasets[Opt["SRC_DS"]])
+		stop(1, "cannot validate revert tree; no datasets renamed")
+
+	for (_i = 1; _i <= NumDS; _i++) {
+		_ds = Opt["SRC_DS"] DSList[_i]
+		_selected[_ds] = 1
+		_snap = Opt["SRC_SNAP"] ? Opt["SRC_SNAP"] : Dataset["SRC", DSList[_i], "latest_snapshot"]
+		if (!_snap)
+			stop(1, "cannot revert tree: no snapshot for '" _ds "'; revert eligible children individually")
+		if (!((_ds _snap) in _available))
+			stop(1, "cannot revert tree: missing snapshot '" _ds _snap "'; revert eligible children individually")
+	}
+	for (_ds in _datasets) {
+		if (!(_ds in _selected))
+			stop(1, "cannot revert tree: unselected dataset '" _ds "'; revert eligible children individually")
+	}
+}
+
 function run_revert(		_ds, _followup) {
+	if (Opt["REVERT_FORCE"])
+		report(LOG_WARNING, "skipping revert preflight; the original tree is preserved, but cloning may stop partway")
+	else
+		validate_revert_tree()
 	# Disable snapshot
 	# TO-DO: Add a mechanism to revert to the previous (rather than named) snapshot
 	_ds = rename_dataset("SRC")
