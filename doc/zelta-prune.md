@@ -71,6 +71,9 @@ The following global filters work as they do for other Zelta verbs; see **zelta-
 `--include` _PATTERN_
 : Include only datasets or snapshots matching _PATTERN_. See _INCLUDE AND EXCLUDE PATTERNS_ in **zelta-options(7)**.
 
+`--prune-name` _PATTERN_
+: Match snapshot names with a glob (`*`, `?`), without a leading `@`. Built-ins are `zfsnap` (`zfsnap_*`), `truenas` (`auto-*`), and `sanoid` (`autosnap_*`).
+
 Additionally, **zelta prune** protects candidates based on their replication state when a match endpoint is supplied.
 
 `--prune-guard=latest`

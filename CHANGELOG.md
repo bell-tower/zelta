@@ -47,6 +47,7 @@ All notable changes to Zelta will be documented in this file.
 - **Docs**: Added in-repository wiki source documents for the active Zelta wiki, including install, overview, start guide, FAQ, backup, policy, sync, recovery, JSON, SSH, ZFS delegation, and environment configuration.
 
 ### Fixed
+- **Prune**: Fixed the ignored `--prune-name` filter.
 - **Exclude**: Fixed `--exclude` behavior with snapshot range compression and corrected prune usage from `-x` to `-X`.
 - **Prune**: Fixed explicit prune selector handling, safe preview output, grouped destroy previews, recursion in `zprune`, and snapshot space descriptions.
 - **Prune**: Fixed `zprune --dryrun` so preview mode does not leak into prune candidate selection.
