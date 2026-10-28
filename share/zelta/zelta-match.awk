@@ -58,6 +58,7 @@ function usage_prune(message) {
 	print "  --depth=NUM             Set max dataset depth"                                       > STDERR
 	print "  --exclude=pattern       Exclude datasets or snapshots matching pattern"              > STDERR
 	print "  --include=pattern       Include only datasets or snapshots matching pattern"         > STDERR
+	print "  --prune-name=pattern    Select snapshot names: zfsnap, truenas, sanoid, or glob"       > STDERR
 	print "Retention Options:"                                                                    > STDERR
 	print "  --prune-num=N           Minimum number of snapshots to keep"                         > STDERR
 	print "  --prune-time=T          Keep snapshots newer than duration T (from current time)"    > STDERR
@@ -571,7 +572,14 @@ function target_has_snap_name(tgt_ds_id, savepoint,		_num_snaps, _s, _tgt_row, _
 	return 0
 }
 
-function prune_init(		_prune_size) {
+function prune_init(		_prune_size, _prune_name) {
+	_prune_name = Opt["PRUNE_NAME"]
+	if (_prune_name == "zfsnap") _prune_name = "zfsnap_*"
+	else if (_prune_name == "truenas") _prune_name = "auto-*"
+	else if (_prune_name == "sanoid") _prune_name = "autosnap_*"
+	if (!is_null(_prune_name))
+		PruneNamePattern = glob_to_regex("@" _prune_name)
+
 	if ((Opt["PRUNE_NUM"] "")  == "" &&
 		(Opt["PRUNE_TIME"] "") == "" &&
 		(Opt["PRUNE_GRID"] "") == "" &&
@@ -706,7 +714,9 @@ function analyze_prune_candidates(		_d, _ds_suffix, _src_ds_id, _tgt_ds_id, _num
 
 			# Only consider snapshots (not bookmarks)
 			if (Row[_src_row, "type"] != IS_SNAPSHOT) continue
-			if (Row[_src_row, "prune_filtered"]) {
+			# Narrow pruning only; keep other names visible to guard matching.
+			if (Row[_src_row, "prune_filtered"] ||
+			    (PruneNamePattern && (_savepoint !~ PruneNamePattern))) {
 				KeptSnap[_src_ds_id, ++NumKeptSnap[_src_ds_id]] = _savepoint
 				KeptSnapIdx[_src_ds_id, NumKeptSnap[_src_ds_id]] = Row[_src_row, "snap_idx"]
 				continue

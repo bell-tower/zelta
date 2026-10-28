@@ -115,6 +115,13 @@ See \f[I]INCLUDE AND EXCLUDE PATTERNS\f[R] in
 Include only datasets or snapshots matching \f[I]PATTERN\f[R].
 See \f[I]INCLUDE AND EXCLUDE PATTERNS\f[R] in
 \f[B]zelta\-options(7)\f[R].
+.TP
+\f[CR]\-\-prune\-name\f[R] \f[I]PATTERN\f[R]
+Match snapshot names with a glob (\f[CR]*\f[R], \f[CR]?\f[R]), without a
+leading \f[CR]\(at\f[R].
+Built\-ins are \f[CR]zfsnap\f[R] (\f[CR]zfsnap_*\f[R]),
+\f[CR]truenas\f[R] (\f[CR]auto\-*\f[R]), and \f[CR]sanoid\f[R]
+(\f[CR]autosnap_*\f[R]).
 .PP
 Additionally, \f[B]zelta prune\f[R] protects candidates based on their
 replication state when a match endpoint is supplied.
