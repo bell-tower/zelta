@@ -2,9 +2,10 @@
 
 All notable changes to Zelta will be documented in this file.
 
-## [1.2.0] - 2026-07-12
+## [1.2.0] - 2026-10-27
 
 ### Known Issues
+- **Prune grids**: `--prune-grid` terms are evaluated in the order supplied, not sorted automatically. Specify intervals from shortest to longest (e.g. `30x1day,52x1week`), with any unlimited term last, and review candidates before running `zprune`.
 - **JSON field naming**: Uses mixed camelCase/snake_case conventions. Will align with OpenZFS `zfs list -j` standards in a later release after upstream coordination.
 - **mawk timestamps**: JSON timestamps require `ZELTA_SYSTIME='date +%s'` when using mawk. gawk and original-awk work without this setting.
 - **GNU Awk 5.2.1 / 5.3.2**: These releases have a serious memory bug. Zelta warns and prefers original-awk/mawk when available.

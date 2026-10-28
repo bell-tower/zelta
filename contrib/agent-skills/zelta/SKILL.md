@@ -22,10 +22,8 @@ zelta help options
 If Zelta is missing:
 
 ```sh
-# Latest (may include beta features)
+# Latest release from main
 curl -fsSL https://zelta.space/web-install.sh | sh
-# Latest release track
-curl -fsSL https://zelta.space/web-install.sh | sh -s -- --branch=release/1.2
 ```
 
 Inspect install scripts before piping them to `sh` when the user wants a security review or production change control.

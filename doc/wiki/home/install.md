@@ -43,11 +43,8 @@ No package dependencies. No daemons. No configuration databases.
 The web installer downloads a GitHub branch archive and runs the normal `install.sh` installer. No `git` required:
 
 ```sh
-# Latest (may include beta features)
+# Latest release from main
 curl -fsSL https://zelta.space/web-install.sh | sh
-
-# Latest release branch
-curl -fsSL https://zelta.space/web-install.sh | sh -s -- --branch=release/1.2
 ```
 
 ### From Repository
