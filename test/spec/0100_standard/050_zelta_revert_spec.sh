@@ -105,8 +105,8 @@ Describe 'Test revert' standard:50
     The status should be success
   End
 
-  It "revert to last snapshot (diagnostic logging) - run env ZELTA_LOG_LEVEL=4 zelta revert \"$SANDBOX_ZELTA_SRC_EP\"@manual_test"
-    When run env ZELTA_LOG_LEVEL=4 zelta revert "$SANDBOX_ZELTA_SRC_EP"@manual_test
+  It "revert to last snapshot (ignore warnings) - run zelta revert -qq \"$SANDBOX_ZELTA_SRC_EP\"@manual_test"
+    When run zelta revert -qq "$SANDBOX_ZELTA_SRC_EP"@manual_test
     The status should be success
   End
 

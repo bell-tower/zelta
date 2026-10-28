@@ -58,6 +58,16 @@ jobs:
           sudo chmod 0440 /etc/sudoers.d/testuser
           sudo visudo -cf /etc/sudoers.d/testuser
 
+      # Linux cannot delegate ZFS mounts. Keep the suite unprivileged, but
+      # elevate its local ZFS commands, including clone's implicit mount.
+      - name: Configure privileged ZFS for Linux tests
+        run: |
+          sudo install -d -m 0755 /home/testuser/ci-bin
+          printf '%s\n' '#!/bin/sh' 'exec sudo -n /usr/sbin/zfs "$@"' \
+            | sudo tee /home/testuser/ci-bin/zfs
+          sudo chmod 0755 /home/testuser/ci-bin/zfs
+          sudo -u testuser /home/testuser/ci-bin/zfs version
+
       - name: Copy repo for test user
         run: |
           sudo cp -r "$GITHUB_WORKSPACE" /home/testuser/zelta
@@ -66,6 +76,7 @@ jobs:
       - name: Run Standard ShellSpec tests
         run: |
           sudo -u testuser env \
+            PATH="/home/testuser/ci-bin:$PATH" \
             SANDBOX_ZELTA_SRC_POOL=apool \
             SANDBOX_ZELTA_TGT_POOL=bpool \
             SANDBOX_ZELTA_SRC_DS=apool/treetop \
@@ -75,6 +86,7 @@ jobs:
       - name: Run Prune Scenario ShellSpec tests
         run: |
           sudo -u testuser env \
+            PATH="/home/testuser/ci-bin:$PATH" \
             SANDBOX_ZELTA_SRC_POOL=apool \
             SANDBOX_ZELTA_TGT_POOL=bpool \
             SANDBOX_ZELTA_SRC_DS=apool/treetop \
