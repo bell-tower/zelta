@@ -2,7 +2,7 @@ name: ShellSpec Tests
 
 on:
   push:
-    branches: [main, dev, "feature/**", "release/**", "fix/shellspec-30-revert-error"]
+    branches: [main, dev, "feature/**", "release/**"]
     paths-ignore:
       - "**.md"
   pull_request:
