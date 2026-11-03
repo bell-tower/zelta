@@ -137,6 +137,11 @@ Back up everything defined in policy settings (**zelta.conf**).
 # EXIT STATUS
 Returns 0 on success, non-zero on error.
 
+# BUGS
+When using Original Awk, Zelta cannot reliably obtain command exit codes from pipes. A failed or interrupted command can produce a partial dataset or snapshot listing that is mistaken for a complete list. This general limitation affects **zelta match** and operations that consume its output; some listing paths do not check completion even with other AWK implementations.
+
+The whole-tree preflight for **zelta revert** checks an explicit completion status and rejects failed or interrupted listings before renaming datasets. This check does not resolve the general listing-truncation limitation elsewhere.
+
 # NOTES
 
 See **zelta-options(7)** for environment variables and `zelta.env` configuration.

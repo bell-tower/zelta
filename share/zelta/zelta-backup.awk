@@ -1538,8 +1538,16 @@ function validate_revert_tree(		_cmd_arr, _cmd, _line, _status, _invalid, _avail
 	_cmd_arr["flags"] = "-t filesystem,volume,snapshot"
 	_cmd = build_command("LIST", _cmd_arr)
 	report(LOG_DEBUG, "`" _cmd "`")
-	_cmd = _cmd CAPTURE_OUTPUT
+	# Original Awk may discard close(pipe)'s exit status. Require completion
+	# in-band before trusting a listing that could have ended partway through.
+	_cmd = "{ " _cmd CAPTURE_OUTPUT "; printf '\\nZELTA_REVERT_STATUS=%s\\n' \"$?\"; }"
+	_status = 1
 	while ((_cmd | getline _line) > 0) {
+		if (_line ~ /^ZELTA_REVERT_STATUS=[0-9]+$/) {
+			_status = substr(_line, index(_line, "=") + 1) + 0
+			continue
+		}
+		if (_line == "") continue
 		if (_line != Opt["SRC_DS"] && index(_line, Opt["SRC_DS"] "/") != 1 && index(_line, Opt["SRC_DS"] "@") != 1) {
 			_invalid = 1
 			continue
@@ -1547,7 +1555,7 @@ function validate_revert_tree(		_cmd_arr, _cmd, _line, _status, _invalid, _avail
 		_available[_line] = 1
 		if (!index(_line, "@")) _datasets[_line] = 1
 	}
-	_status = close(_cmd)
+	close(_cmd)
 	if (_status || _invalid || !_datasets[Opt["SRC_DS"]])
 		stop(1, "cannot validate revert tree; no datasets renamed")
 

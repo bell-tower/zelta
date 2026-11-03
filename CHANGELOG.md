@@ -2,7 +2,7 @@
 
 All notable changes to Zelta will be documented in this file.
 
-## [1.2.0] - 2026-10-27
+## [1.2.0] - 2026-11-03
 
 ### Known Issues
 - **Prune grids**: `--prune-grid` terms are evaluated in the order supplied, not sorted automatically. Specify intervals from shortest to longest (e.g. `30x1day,52x1week`), with any unlimited term last, and review candidates before running `zprune`.
@@ -49,6 +49,7 @@ All notable changes to Zelta will be documented in this file.
 - **Docs**: Added in-repository wiki source documents for the active Zelta wiki, including install, overview, start guide, FAQ, backup, policy, sync, recovery, JSON, SSH, ZFS delegation, and environment configuration.
 
 ### Fixed
+- **Revert**: Check whole-tree listing completion explicitly, rejecting partial output from failed commands even when Original Awk discards pipe exit status. The general listing-truncation limitation remains documented in **zelta(8)**.
 - **Prune**: Fixed the ignored `--prune-name` filter.
 - **Exclude**: Fixed `--exclude` behavior with snapshot range compression and corrected prune usage from `-x` to `-X`.
 - **Prune**: Fixed explicit prune selector handling, safe preview output, grouped destroy previews, recursion in `zprune`, and snapshot space descriptions.

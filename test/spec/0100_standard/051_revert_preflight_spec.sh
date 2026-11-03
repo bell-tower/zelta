@@ -38,6 +38,7 @@ list)
 		no-snapshot*) ;;
 		*) printf '%s\n' 'apool/source/child with space@new' ;;
 		esac
+		[ "$REVERT_CASE" != coherent-list-failure ] || exit 23
 	else
 		printf 'apool/source@old\t2\n'
 		printf 'apool/source\t1\n'
@@ -121,6 +122,19 @@ Describe 'Revert whole-tree preflight' standard:51
 		The status should be failure
 		The error should eq 'error: cannot validate revert tree; no datasets renamed'
 		The path "$SHELLSPEC_TMPBASE/revert-mutations-list-failure" should not be exist
+	End
+
+	Describe 'Failed listing with partial output'
+		Parameters
+			-qq
+			-qqn
+		End
+		It "rejects valid-looking partial output with $1"
+			When call run_revert_preflight coherent-list-failure zelta revert "$1" apool/source@old
+			The status should be failure
+			The error should eq 'error: cannot validate revert tree; no datasets renamed'
+			The path "$SHELLSPEC_TMPBASE/revert-mutations-coherent-list-failure" should not be exist
+		End
 	End
 
 	It 'permits a coherent recursive dry run'
