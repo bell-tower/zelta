@@ -154,6 +154,8 @@ If a snapshot is needed for replication, the operation will fail.
 .TP
 \f[B]\-\-snapshot, \-\-snapshot\-always\f[R]
 Force snapshot creation even if the source has no uncommitted changes.
+If the snapshot cannot be created, the operation stops with an error
+rather than syncing an older snapshot.
 .TP
 \f[B]\-\-snap\-name\f[R] \f[I]NAME\f[R]
 Specify snapshot name.
