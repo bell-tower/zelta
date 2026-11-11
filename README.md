@@ -5,7 +5,7 @@
 ---
 > - **What's New:** Check [CHANGELOG.md](CHANGELOG.md) for the latest changes
 > - **Found a Bug?** Please [open an issue](https://github.com/bell-tower/zelta/issues)
-> - **Previous Release:** [March 2024, Zelta v1.0](https://github.com/bell-tower/zelta/tree/release/1.0)
+> - **Previous Release:** [January 2026, Zelta v1.1](https://github.com/bell-tower/zelta/tree/release/1.1)
 > 
 >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  ![ShellSpec Tests](https://github.com/bell-tower/zelta/actions/workflows/shellspec.yml/badge.svg)
 ---
