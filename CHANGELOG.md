@@ -8,7 +8,7 @@ All notable changes to Zelta will be documented in this file.
 - **Prune**: `zelta prune` output and options changed substantially (retention filters, guard modes, 30/30 failsafe, range-compressed multi-dataset output). Review scripts that parse it. Destruction now goes through the new `zprune`.
 - **Revert**: Incomplete recursive rewinds are now rejected. Use `--force` / `-f` for a best-effort revert.
 - **JSON**: Null fields are dropped and control characters are sanitized. Review strict parsers.
-- **Packaging**: Generated man pages moved to `doc/man7` and `doc/man8`.
+- **Packaging**: Man page sources in the release tarball moved from `doc/` to `doc/man7` and `doc/man8`. Installed locations are unchanged.
 
 ### Known Issues
 - **Prune grids**: `--prune-grid` terms are evaluated in the order supplied, not sorted automatically. Specify intervals from shortest to longest (e.g. `30x1day,52x1week`), with any unlimited term last, and review candidates before running `zprune`.
@@ -44,7 +44,7 @@ All notable changes to Zelta will be documented in this file.
 - **Match**: Expanded match analysis for encrypted targets, IV set comparison, written-size reporting, multiple operands, and dynamic report output. Usage output now documents shared filter options including `--depth`, `--exclude`, and `--include`.
 - **JSON**: Drop null fields from JSON output, sanitize control characters (including CR), and terminate JSON output with a newline for cleaner piping.
 - **Install**: One-shot installer now downloads GitHub branch archives instead of requiring `git`, detects user install paths, reports up-to-date installs, and prints the installed version.
-- **Docs**: Updated man pages for the new workflows; generated man pages are organized under `doc/man7` and `doc/man8`.
+- **Docs**: Updated man pages for the new workflows.
 - **Docs**: Added in-repository wiki source documents, including install, overview, start guide, FAQ, backup, policy, sync, recovery, JSON, SSH, ZFS delegation, and environment configuration.
 
 ### Fixed
