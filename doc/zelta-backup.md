@@ -107,7 +107,7 @@ _target_
 : Do not create snapshots. If a snapshot is needed for replication, the operation will fail.
 
 **\--snapshot, \--snapshot-always**
-: Force snapshot creation even if the source has no uncommitted changes.
+: Force snapshot creation even if the source has no uncommitted changes. If the snapshot cannot be created, the operation stops with an error rather than syncing an older snapshot.
 
 **\--snap-name** _NAME_
 : Specify snapshot name. Use `$(command)` for dynamic generation. Default: `$(date -u +zelta_%Y-%m-%d_%H.%M.%S)`.

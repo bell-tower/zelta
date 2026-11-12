@@ -526,6 +526,9 @@ function create_source_snapshot(force_snap,	_snap_name, _ds_snap, _cmd_arr, _cmd
 		}
 	}
 	close(_cmd)
+	# --snapshot requires this snapshot; don't sync an older one instead
+	if (_snap_failed && (Opt["SNAP_MODE"] == "ALWAYS"))
+		stop(1, "error creating snapshot '" _ds_snap "'")
 	# If there's unexpected output, rely on `zelta match` to compute a final snapshot
 	if (!_snap_failed) {
 		# We only want to attempt to take a snapshot at most once
