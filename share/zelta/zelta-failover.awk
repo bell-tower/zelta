@@ -124,7 +124,9 @@ function unlock_dataset(ep,    _cmd, _cmd_arr, _list_cmd, _mount_cmd, _list_loca
 	_cmd_arr["props"] = "name"
 	_cmd_arr["flags"] = "-t filesystem -s createtxg"
 	_list_local = build_command("LIST", _cmd_arr)
+	# Mount top down: a parent's name always sorts before its descendants.
 	_cmd_arr["props"] = "name,canmount,mounted"
+	_cmd_arr["flags"] = "-t filesystem -s name"
 	_mount_local = build_command("LIST", _cmd_arr)
 	_list_cmd = endpoint_cmd(ep, _list_local)
 	_mount_cmd = endpoint_cmd(ep, _mount_local)
@@ -144,10 +146,6 @@ function unlock_dataset(ep,    _cmd, _cmd_arr, _list_cmd, _mount_cmd, _list_loca
 		}
 		close(_cmd)
 	}
-	delete _cmd_arr
-	_cmd_arr["flags"] = "-R"
-	_cmd_arr["ds"] = q(ep["DS"])
-	try_cmd(endpoint_build_cmd(ep, "MOUNT", _cmd_arr), "failed recursive mount during unlock")
 	if (Opt["DRYRUN"]) {
 		report(LOG_NOTICE, "+ " endpoint_cmd(ep, _mount_local " | while read ds canmount mounted; do [ \\\"$canmount\\\" != off ] && [ \\\"$mounted\\\" != yes ] && zfs mount \\\"$ds\\\"; done"))
 		return

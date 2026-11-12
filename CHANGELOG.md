@@ -6,6 +6,7 @@ All notable changes to Zelta will be documented in this file.
 
 ### Fixed
 - **Backup**: `--snapshot` now stops with an error when the snapshot cannot be created, instead of syncing an older snapshot and exiting 0.
+- **Failover**: `zelta unlock` and `zelta failover` no longer report "failed recursive mount during unlock" and exit 1 on OpenZFS 2.2, which lacks `zfs mount -R`. Unlock now mounts each dataset top down.
 
 ## [1.2.0] - 2026-11-03
 
