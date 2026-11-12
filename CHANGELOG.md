@@ -6,6 +6,7 @@ All notable changes to Zelta will be documented in this file.
 
 ### Fixed
 - **Backup**: `--snapshot` now stops with an error when the snapshot cannot be created, instead of syncing an older snapshot and exiting 0.
+- **Backup**: A source endpoint's `@snapshot` now ends the sync when newer snapshots exist, instead of failing with exit 2 after a successful sync or sending past it with `--exclude` / `--include`.
 
 ## [1.2.0] - 2026-11-03
 
