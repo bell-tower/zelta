@@ -1000,7 +1000,7 @@ function run_zfs_sync(ds_suffix,		_cmd, _stream_info, _message, _ds_snap,
 	IGNORE_ZFS_SEND_OUTPUT = "^(incremental|full)"
 	IGNORE_RESUME_OUTPUT = "^nvlist version|^\t(fromguid|object|offset|bytes|toguid|toname|embedok|compressok)"
 	WARN_ZFS_RECV_PROPS = "cannot receive .* property"
-	FAIL_ZFS_SEND_RECV_OUTPUT = "^(cannot receive .* stream|cannot send|missing.*argument)"
+	FAIL_ZFS_SEND_RECV_OUTPUT = "^(cannot receive(:| .* stream)|cannot restore to |cannot resume recv |cannot send|missing.*argument)"
 	FAIL_ZFS_OPTION_OUTPUT = "^(invalid|illegal|unknown|unrecognized) option|^usage:"
 	_message            = Source["DS"] ds_suffix
 	if (DSPair[ds_suffix, "source_start"])
