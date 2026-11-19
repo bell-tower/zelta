@@ -392,11 +392,11 @@ function xargs(		_xargs_cmd, _site, _echo_sites, _return_code) {
 			_echo_sites = str_add(_echo_sites, q(_site))
 	report(LOG_DEBUG, "launching " Global["JOBS"] " 'zelta policy' jobs")
 	_xargs_cmd = _echo_sites " | xargs -n1 -P" Global["JOBS"] " " _policy_cmd
-	system(_xargs_cmd)
-	return _return_code
+	_return_code = system(_xargs_cmd)
+	return !!_return_code
 }
 
-# Main loop to execute backup jobs with retry logic
+# Main loop to execute backup jobs with retry logic; returns the number of failed jobs
 function backup_loop(		_j, _num_failed, _failed_arr, _endpoint_key) {
 	for (_j = 1; _j <= NumJobs; _j++) {
 		if (zelta_backup(_j)) {
@@ -413,6 +413,9 @@ function backup_loop(		_j, _num_failed, _failed_arr, _endpoint_key) {
 			}
 		}
 	}
+	for (_endpoint_key in _failed_arr)
+		report(LOG_ERROR, "failed: " Job[_endpoint_key, "name"])
+	return _num_failed
 }
 
 # Main entry point: initialize, load config, and execute jobs
@@ -432,7 +435,6 @@ BEGIN {
 			dryrun_table()
 		stop(0)
 	}
-	if (should_xargs()) xargs()
-	else backup_loop()
-	stop(0)
+	if (should_xargs()) stop(xargs())
+	stop(backup_loop() ? 1 : 0)
 }
