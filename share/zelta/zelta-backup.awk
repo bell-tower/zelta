@@ -1083,9 +1083,10 @@ function run_zfs_sync(ds_suffix,		_cmd, _stream_info, _message, _ds_snap,
 			Summary["replicationErrorCode"] = 2
 		}
 	}
+	# Some original-awk versions discard close(pipe)'s exit status
 	_cmd_status = close(_cmd)
-	if (!_streams && !_sync_error && _cmd_status) {
-		_error_msg = "sync command failed before receiving stream: " _ds_snap " -> " Opt["TGT_DS"] ds_suffix
+	if (!_sync_error && _cmd_status) {
+		_error_msg = "sync command failed" (_streams ? "" : " before receiving stream") ": " _ds_snap " -> " Opt["TGT_DS"] ds_suffix
 		report(LOG_ERROR, _error_msg)
 		_sync_error = 1
 		Summary["replicationErrorCode"] = 2
